@@ -1294,7 +1294,7 @@
   <div class="scroll-content" style="padding:20px 16px 100px;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
       <!-- Avatar — image or camera placeholder -->
-      <div id="edit-avatar-preview" onclick="triggerAvatarUpload()" style="width:88px;height:88px;border-radius:50%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.12);" id="avatar-border-ring">
+      <div id="edit-avatar-preview" onclick="triggerAvatarUpload()" style="width:88px;height:88px;border-radius:50%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.12);">
         <!-- Camera placeholder shown when no photo -->
         <div id="edit-avatar-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.8" style="width:28px;height:28px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -2140,14 +2140,15 @@ function showScreen(name) {
   if (name === 'calendar')    renderCalendar();
   if (name === 'messages')    renderInbox();
   if (name === 'settings')    renderThemeGrid();
-  if (name === 'editprofile') {    const editName = document.getElementById('edit-name');
+  if (name === 'editprofile') {
+    const editName = document.getElementById('edit-name');
     const editHandle = document.getElementById('edit-handle');
     if (editName) editName.value = userName || '';
     if (editHandle) editHandle.value = userHandle || '';
     const preview = document.getElementById('name-preview');
     if (preview) preview.textContent = userName || '';
-    const avatarPrev = document.getElementById('edit-avatar-preview');
-    if (avatarPrev) avatarPrev.textContent = (userName||'u')[0].toLowerCase();
+    // Restore avatar — show photo if we have one, else placeholder
+    refreshEditAvatarPreview();
   }
 
   window.scrollTo(0, 0);
@@ -2271,13 +2272,17 @@ async function searchPeople(q) {
     </div>`;
     return;
   }
-  const search = q.trim().toLowerCase();
-  const { data: results } = await _supaClient
-    .from('profiles')
-    .select('id, display_name, handle, avatar_color')
-    .or(`display_name.ilike.%${search}%,handle.ilike.%${search}%`)
-    .neq('id', currentSupaUser?.id || '')
-    .limit(20);
+  const search = q.trim().toLowerCase().replace(/^@/,'');
+  const [pnr, phr] = await Promise.all([
+    _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
+      .neq('id', currentSupaUser?.id||'').ilike('display_name',`%${search}%`).limit(15),
+    _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
+      .neq('id', currentSupaUser?.id||'').ilike('handle',`%${search}%`).limit(15)
+  ]);
+  const _seen = new Set();
+  const results = [...(pnr.data||[]),...(phr.data||[])].filter(p => {
+    if (_seen.has(p.id)) return false; _seen.add(p.id); return true;
+  });
 
   if (!results || results.length === 0) {
     container.innerHTML = `<div style="text-align:center;padding:32px 20px;color:var(--gray-500);font-size:13px;">No results for "${esc(q)}"</div>`;
@@ -3294,7 +3299,7 @@ function scorePerson(p, q) {
   if (best <= 1) return 50;
   if (best <= 2) return 35;
   if (best <= 3) return 20;
-  return 0;
+  return 5; // still show — DB already filtered for relevance
 }
 
 async function searchFriends() {
@@ -3319,24 +3324,35 @@ async function searchFriends() {
 
   clearTimeout(_searchDebounce);
   _searchDebounce = setTimeout(async () => {
-    // Broad search — get candidates, then rank client-side
-    // Search by full query AND by first 2 chars to catch partial matches
-    const qClean = q.replace('@','');
-    const { data } = await _supaClient
-      .from('profiles')
-      .select('id, display_name, handle, avatar_color, avatar_url')
-      .neq('id', currentSupaUser?.id || '')
-      .or(`display_name.ilike.%${qClean}%,handle.ilike.%${qClean}%,display_name.ilike.${qClean}%,handle.ilike.%@${qClean}%`)
-      .limit(40);
+    const qClean = q.replace(/^@/,'').trim();
+
+    // Run two queries in parallel: one for display_name, one for handle
+    const [nameRes, handleRes] = await Promise.all([
+      _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
+        .neq('id', currentSupaUser?.id || '')
+        .ilike('display_name', `%${qClean}%`)
+        .limit(20),
+      _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
+        .neq('id', currentSupaUser?.id || '')
+        .ilike('handle', `%${qClean}%`)
+        .limit(20)
+    ]);
+
+    // Merge + deduplicate by id
+    const seen = new Set();
+    const merged = [...(nameRes.data||[]), ...(handleRes.data||[])].filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
 
     const followingIds = new Set(friends.map(f => f.id));
 
-    // Score + filter + sort
-    const scored = (data||[])
+    // Score and sort — show ALL results from DB (don't filter by score)
+    const scored = merged
       .map(p => ({ ...p, _score: scorePerson(p, q) }))
-      .filter(p => p._score > 0)
       .sort((a,b) => b._score - a._score)
-      .slice(0, 10);
+      .slice(0, 15);
 
     if (scored.length === 0) {
       resultsEl.innerHTML = `<div style="text-align:center;padding:32px 20px;">
@@ -4987,15 +5003,29 @@ function confirmCrop() {
   const dataUrl = out.toDataURL('image/jpeg', 0.88);
   _pendingAvatarImage = dataUrl;
 
-  // Update edit preview
-  const img = document.getElementById('edit-avatar-img');
-  const initial = document.getElementById('edit-avatar-initial');
-  if (img) { img.src = dataUrl; img.style.display = 'block'; }
-  if (initial) initial.style.display = 'none';
-
+  _pendingAvatarImage = dataUrl;
   document.getElementById('avatar-crop-modal').style.display = 'none';
   _cropImg = null;
-  showToast('Looking good! Hit Save to apply ✓');
+  // Show immediately in edit preview
+  refreshEditAvatarPreview(dataUrl);
+  showToast('Looking good! Tap Save to apply ✓');
+}
+
+// ── Refresh edit screen avatar preview ──────────────────────
+function refreshEditAvatarPreview(overrideDataUrl) {
+  const img = document.getElementById('edit-avatar-img');
+  const placeholder = document.getElementById('edit-avatar-placeholder');
+  const overlay = document.getElementById('avatar-overlay');
+  const photoUrl = overrideDataUrl || _pendingAvatarImage || userAvatarImage || (currentProfile && currentProfile.avatar_url);
+
+  if (photoUrl) {
+    if (img) { img.src = photoUrl; img.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+    if (overlay) overlay.style.opacity = '0';
+  } else {
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    if (placeholder) placeholder.style.display = 'flex';
+  }
 }
 
 // Hover overlay show/hide
@@ -5313,6 +5343,8 @@ function applyProfileToUI(profile) {
     const editAvatarPrev = document.getElementById('edit-avatar-preview');
     if (editAvatarPrev) { editAvatarPrev.style.background = colour; editAvatarPrev.style.backgroundImage = ''; }
   }
+  // Always sync the edit screen preview
+  refreshEditAvatarPreview();
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
@@ -5463,8 +5495,13 @@ async function doLogin() {
 
   _loginAttempts.count = 0; // reset on success
   currentSupaUser = data.user;
-  await loadProfile(data.user);
-  enterApp();
+  // Don't call enterApp() directly — let onAuthStateChange SIGNED_IN handle it
+  // This avoids double-enter race condition with Google OAuth flow
+  // But in case SIGNED_IN already fired before we get here, enter now
+  if (!currentScreen || currentScreen === 'login' || currentScreen === 'signup') {
+    await loadProfile(data.user);
+    enterApp();
+  }
 }
 
 // == SIGN UP ==
@@ -5677,7 +5714,10 @@ function showAuthError(screen, msg) {
       appEntered = true;
       currentSupaUser = user;
       try { await loadProfile(user); } catch(e) { console.warn(e); }
-      enterApp();
+      // Only enter app if not already inside it (email login may have already called enterApp)
+      const onAuthScreen = document.getElementById('screen-auth')?.classList.contains('active') ||
+                           document.getElementById('screen-splash')?.classList.contains('active');
+      if (onAuthScreen) enterApp();
     }
 
     _supaClient.auth.onAuthStateChange(async (event, session) => {
