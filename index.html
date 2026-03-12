@@ -720,6 +720,9 @@
         <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;accent-color:#2DD4BF;cursor:pointer;">
         <span style="font-size:13px;color:#9ca3af;">Remember me</span>
       </label>
+      <div style="text-align:center;margin-top:14px;">
+        <button onclick="showForgotPassword()" style="background:none;border:none;color:#2DD4BF;font-size:13px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
+      </div>
 
       <div style="text-align:center;margin-top:4px;">
         <span style="font-size:13px;color:#6b7280;">Forgot password? </span>
@@ -1106,7 +1109,7 @@
       <div class="avatar-lg" id="settings-avatar" style="width:48px;height:48px;font-size:18px;">h</div>
       <div>
         <div class="name" id="settings-name">harry</div>
-        <div class="email"><a href="https://fitshare-v1.netlify.app/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="96fef7e4e4eff1fffafafff1f7f8afafd6f1fbf7fffab8f5f9fb">[email&nbsp;protected]</a></div>
+        <div class="email"><a href="mailto:info@fitshare.co.uk" style="color:#2DD4BF;">info@fitshare.co.uk</a></div>
       </div>
       <div id="pro-badge-settings" style="display:none;margin-left:auto;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;">✦ PRO</div>
     </div>
@@ -1794,7 +1797,7 @@
     <div class="tnc-section" style="padding-bottom:16px;">
       <h2><span class="tnc-num">10</span>Governing Law</h2>
       <p>These Terms are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
-      <p>For questions about these Terms, contact: <strong><a href="https://fitshare-v1.netlify.app/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f9959c9e9895b99f908d8a91988b9cd7988989">[email&nbsp;protected]</a></strong></p>
+      <p>For questions about these Terms, contact: <strong><a href="mailto:info@fitshare.co.uk" style="color:#2DD4BF;">info@fitshare.co.uk</a></strong></p>
     </div>
   </div>
   <div class="tnc-accept-bar" id="tnc-accept-bar" style="display:none;">
@@ -2073,6 +2076,18 @@
   </div>
 </div>
 
+<!-- FORGOT PASSWORD MODAL -->
+<div id="forgot-password-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg,#fff);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+    <h3 style="font-size:18px;font-weight:800;color:var(--black,#111);margin:0 0 6px;">Reset Password</h3>
+    <p style="font-size:13px;color:var(--gray-500,#6b7280);margin:0 0 18px;">Enter your email and we'll send a reset link. Also works for Google accounts to set a password.</p>
+    <input type="email" id="reset-email-input" placeholder="your@email.com" style="width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--gray-200,#e5e7eb);background:var(--input-bg,#f9fafb);color:var(--black,#111);font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px;">
+    <div id="reset-msg" style="font-size:13px;color:#22c55e;display:none;margin-bottom:10px;text-align:center;padding:10px;background:#f0fdf4;border-radius:8px;"></div>
+    <button id="reset-send-btn" onclick="sendPasswordReset()" style="width:100%;padding:14px;border-radius:12px;background:#2DD4BF;color:#111;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px;">Send Reset Link</button>
+    <button onclick="closeForgotPassword()" style="width:100%;padding:12px;border-radius:12px;background:var(--gray-100,#f3f4f6);color:var(--gray-700,#374151);font-size:14px;font-weight:600;border:none;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -2209,11 +2224,11 @@ function renderFeed() {
   const grid = document.getElementById('feed-grid');
   const friendPool = otherItems.length > 0 ? otherItems : sampleItems;
   const friendIds = new Set(friends.map(f => f.id));
-  // Enforce visibility: filter out items marked friends-only if not a friend, private = never show
+  // Enforce visibility: private=never, friends=friends only, all=everyone
   const filteredPool = friendPool.filter(item => {
     if (item.visibility === 'private') return false;
-    if ((item.visibility === 'friends' || item.visibility === 'all') && !friendIds.has(item.user_id)) return false;
-
+    if (item.visibility === 'friends' && !friendIds.has(item.user_id)) return false;
+    // 'all' = show to everyone, undefined = treat as all
     return true;
   });
   const allItems = [...filteredPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
@@ -5686,6 +5701,15 @@ async function loadOtherItems() {
 async function enterApp() {
   // Check if returning from Stripe Checkout
   const urlParams = new URLSearchParams(window.location.search);
+  // Handle password reset redirect
+  if (urlParams.get('reset') === '1') {
+    window.history.replaceState({}, '', window.location.pathname);
+    // Supabase auto-signs in the user from the reset link — they can now update password
+    setTimeout(() => {
+      showToast('Set your new password in Settings → Change Password');
+      showScreen('settings');
+    }, 800);
+  }
   if (urlParams.get('plus') === 'success') {
     // Reload profile — webhook may have already updated is_pro
     setTimeout(async () => {
@@ -5811,6 +5835,40 @@ async function doLogin() {
   currentSupaUser = data.user;
   await loadProfile(data.user);
   enterApp();
+}
+
+// == FORGOT PASSWORD ==
+function showForgotPassword() {
+  // Pre-fill with whatever email is in the login field
+  const loginEmail = document.getElementById('login-email')?.value?.trim();
+  if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
+  document.getElementById('reset-msg').style.display = 'none';
+  document.getElementById('reset-send-btn').textContent = 'Send Reset Link';
+  document.getElementById('reset-send-btn').disabled = false;
+  const modal = document.getElementById('forgot-password-modal');
+  modal.style.display = 'flex';
+}
+function closeForgotPassword() {
+  document.getElementById('forgot-password-modal').style.display = 'none';
+}
+async function sendPasswordReset() {
+  const email = document.getElementById('reset-email-input').value.trim();
+  const msgEl = document.getElementById('reset-msg');
+  const btn = document.getElementById('reset-send-btn');
+  if (!email) { msgEl.textContent = 'Please enter your email'; msgEl.style.color = '#ef4444'; msgEl.style.background = '#fef2f2'; msgEl.style.display = 'block'; return; }
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  const { error } = await _supaClient.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://fitshare.co.uk/?reset=1'
+  });
+  if (error) {
+    msgEl.textContent = error.message || 'Something went wrong';
+    msgEl.style.color = '#ef4444'; msgEl.style.background = '#fef2f2';
+  } else {
+    msgEl.textContent = '✓ Check your email for the reset link!';
+    msgEl.style.color = '#16a34a'; msgEl.style.background = '#f0fdf4';
+    btn.textContent = 'Email sent!';
+  }
+  msgEl.style.display = 'block';
 }
 
 // == SIGN UP ==
