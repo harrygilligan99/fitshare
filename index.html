@@ -1293,28 +1293,50 @@
   </div>
   <div class="scroll-content" style="padding:20px 16px 100px;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
-      <!-- Avatar — shows uploaded photo or colour initial -->
-      <div id="edit-avatar-preview" onclick="triggerAvatarUpload()" style="width:80px;height:80px;border-radius:50%;background:#2DD4BF;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:white;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;">
-        <span id="edit-avatar-initial">h</span>
-        <img id="edit-avatar-img" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;">
-        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" id="avatar-overlay">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:24px;height:24px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+      <!-- Avatar — image or camera placeholder -->
+      <div id="edit-avatar-preview" onclick="triggerAvatarUpload()" style="width:88px;height:88px;border-radius:50%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;border:3px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.12);" id="avatar-border-ring">
+        <!-- Camera placeholder shown when no photo -->
+        <div id="edit-avatar-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.8" style="width:28px;height:28px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span style="font-size:10px;color:var(--gray-400);font-weight:600;">Add photo</span>
+        </div>
+        <!-- Actual photo once uploaded -->
+        <img id="edit-avatar-img" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+        <!-- Camera overlay on hover/tap -->
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" id="avatar-overlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:22px;height:22px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
       </div>
       <input type="file" id="avatar-upload-input" accept="image/*" style="display:none;" onchange="handleAvatarUpload(this)">
-      <div style="font-size:13px;color:var(--teal-dark);font-weight:600;cursor:pointer;margin-top:6px;" onclick="triggerAvatarUpload()">Change photo</div>
+      <div style="font-size:12px;color:var(--gray-400);cursor:pointer;margin-top:6px;" onclick="triggerAvatarUpload()">Tap to change</div>
     </div>
 
     <div class="field-label">Display Name</div>
     <input type="text" class="field-input" id="edit-name" value="harry" oninput="previewName()">
 
-    <div class="field-label" style="margin-top:14px;">Username</div>
-    <input type="text" class="field-input" id="edit-handle" value="@54024831" placeholder="@yourhandle">
+    <div class="field-label" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">
+      Username
+      <span id="handle-status" style="font-size:11px;font-weight:600;"></span>
+    </div>
+    <input type="text" class="field-input" id="edit-handle" value="@54024831" placeholder="@yourhandle" oninput="checkHandleAvailability(this.value)">
 
     <!-- PRO ONLY SECTION -->
     <div class="pro-section-header">
-      <span>✦ Pro Customisation</span>
-      <span class="pro-lock-tag" id="ep-lock" onclick="showScreen(&#39;pro&#39;)">Unlock Pro</span>
+      <span>✦ Plus Customisation</span>
+      <span class="pro-lock-tag" id="ep-lock" onclick="showScreen(&#39;pro&#39;)">Unlock Plus</span>
+    </div>
+
+    <div class="field-label">Avatar Border Colour <span class="pro-tag-inline">PLUS</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;" id="avatar-border-picker">
+      <div onclick="setAvatarBorder('white',this)" style="width:28px;height:28px;border-radius:50%;background:white;cursor:pointer;border:1.5px solid var(--gray-200);outline:3px solid var(--black);outline-offset:2px;"></div>
+      <div onclick="setAvatarBorder('#2DD4BF',this)" style="width:28px;height:28px;border-radius:50%;background:#2DD4BF;cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('#f43f5e',this)" style="width:28px;height:28px;border-radius:50%;background:#f43f5e;cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('#a855f7',this)" style="width:28px;height:28px;border-radius:50%;background:#a855f7;cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('#f59e0b',this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('linear-gradient(135deg,#f59e0b,#f97316)',this)" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f97316);cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('linear-gradient(135deg,#ec4899,#a855f7)',this)" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#a855f7);cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('linear-gradient(135deg,#2DD4BF,#3b82f6)',this)" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2DD4BF,#3b82f6);cursor:pointer;outline:none;"></div>
+      <div onclick="setAvatarBorder('#111111',this)" style="width:28px;height:28px;border-radius:50%;background:#111111;cursor:pointer;outline:none;"></div>
     </div>
 
     <div class="field-label">Name Emoji Tag <span class="pro-tag-inline">PRO</span></div>
@@ -4803,7 +4825,7 @@ let _pendingAvatarImage = null; // base64 data URL (cropped)
 // ── Avatar upload + crop ──────────────────────────────────
 let _cropImg = null, _cropX = 0, _cropY = 0, _cropScale = 1;
 let _cropDragging = false, _cropLastX = 0, _cropLastY = 0;
-let _cropPinchDist = 0;
+let _cropPinchDist = 0, _cropPinchMidX = 0, _cropPinchMidY = 0;
 
 function triggerAvatarUpload() {
   document.getElementById('avatar-upload-input')?.click();
@@ -4820,41 +4842,47 @@ function handleAvatarUpload(input) {
   input.value = '';
 }
 
+const CROP_SIZE = 300;
+
 function openCropModal(dataUrl) {
   const modal = document.getElementById('avatar-crop-modal');
   modal.style.display = 'flex';
 
   const canvas = document.getElementById('crop-canvas');
-  const container = document.getElementById('crop-container');
-  const SIZE = 280;
-  canvas.width = SIZE;
-  canvas.height = SIZE;
+  canvas.width = CROP_SIZE;
+  canvas.height = CROP_SIZE;
 
   _cropImg = new Image();
   _cropImg.onload = () => {
-    // Start: fit image to fill circle, centred
-    const ratio = Math.max(SIZE / _cropImg.width, SIZE / _cropImg.height);
+    const ratio = Math.max(CROP_SIZE / _cropImg.width, CROP_SIZE / _cropImg.height);
     _cropScale = ratio;
-    _cropX = (SIZE - _cropImg.width * ratio) / 2;
-    _cropY = (SIZE - _cropImg.height * ratio) / 2;
+    _cropX = (CROP_SIZE - _cropImg.width * ratio) / 2;
+    _cropY = (CROP_SIZE - _cropImg.height * ratio) / 2;
     document.getElementById('crop-zoom').value = 1;
     drawCrop();
   };
   _cropImg.src = dataUrl;
 
   // ── Mouse drag ──
-  canvas.onmousedown = e => { _cropDragging = true; _cropLastX = e.clientX; _cropLastY = e.clientY; canvas.style.cursor = 'grabbing'; };
+  canvas.onmousedown = e => {
+    _cropDragging = true;
+    _cropLastX = e.clientX;
+    _cropLastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  };
   window.onmousemove = e => {
     if (!_cropDragging) return;
     _cropX += e.clientX - _cropLastX;
     _cropY += e.clientY - _cropLastY;
-    _cropLastX = e.clientX; _cropLastY = e.clientY;
+    _cropLastX = e.clientX;
+    _cropLastY = e.clientY;
     drawCrop();
   };
   window.onmouseup = () => { _cropDragging = false; canvas.style.cursor = 'grab'; };
 
-  // ── Touch drag + pinch ──
-  canvas.ontouchstart = e => {
+  // ── Touch drag + pinch — attached to container so full area responds ──
+  const container = document.getElementById('crop-container');
+  container.ontouchstart = e => {
     e.preventDefault();
     if (e.touches.length === 1) {
       _cropDragging = true;
@@ -4866,9 +4894,13 @@ function openCropModal(dataUrl) {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
+      // Midpoint of pinch in canvas coords
+      const rect = canvas.getBoundingClientRect();
+      _cropPinchMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+      _cropPinchMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
     }
   };
-  canvas.ontouchmove = e => {
+  container.ontouchmove = e => {
     e.preventDefault();
     if (e.touches.length === 1 && _cropDragging) {
       _cropX += e.touches[0].clientX - _cropLastX;
@@ -4883,29 +4915,58 @@ function openCropModal(dataUrl) {
       );
       const delta = dist / _cropPinchDist;
       _cropPinchDist = dist;
-      const baseScale = _cropImg ? Math.max(280 / _cropImg.width, 280 / _cropImg.height) : 1;
-      _cropScale = Math.max(baseScale, Math.min(_cropScale * delta, baseScale * 4));
-      document.getElementById('crop-zoom').value = _cropScale / baseScale;
+      const baseScale = Math.max(CROP_SIZE / _cropImg.width, CROP_SIZE / _cropImg.height);
+      const newScale = Math.max(baseScale * 0.9, Math.min(_cropScale * delta, baseScale * 5));
+      // Zoom towards pinch midpoint
+      _cropX = _cropPinchMidX - (_cropPinchMidX - _cropX) * (newScale / _cropScale);
+      _cropY = _cropPinchMidY - (_cropPinchMidY - _cropY) * (newScale / _cropScale);
+      _cropScale = newScale;
+      document.getElementById('crop-zoom').value = Math.min(4, _cropScale / baseScale);
       drawCrop();
     }
   };
-  canvas.ontouchend = e => { if (e.touches.length === 0) _cropDragging = false; };
+  container.ontouchend = e => { if (e.touches.length < 2) _cropPinchDist = 0; if (e.touches.length === 0) _cropDragging = false; };
 }
 
 function drawCrop() {
   const canvas = document.getElementById('crop-canvas');
   if (!canvas || !_cropImg) return;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 280, 280);
+  ctx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
   ctx.drawImage(_cropImg, _cropX, _cropY, _cropImg.width * _cropScale, _cropImg.height * _cropScale);
 }
 
 function cropZoomChanged() {
   if (!_cropImg) return;
-  const slider = document.getElementById('crop-zoom');
-  const baseScale = Math.max(280 / _cropImg.width, 280 / _cropImg.height);
-  _cropScale = baseScale * parseFloat(slider.value);
+  const baseScale = Math.max(CROP_SIZE / _cropImg.width, CROP_SIZE / _cropImg.height);
+  const newScale = baseScale * parseFloat(document.getElementById('crop-zoom').value);
+  // Zoom towards centre
+  const cx = CROP_SIZE / 2, cy = CROP_SIZE / 2;
+  _cropX = cx - (cx - _cropX) * (newScale / _cropScale);
+  _cropY = cy - (cy - _cropY) * (newScale / _cropScale);
+  _cropScale = newScale;
   drawCrop();
+}
+
+
+function setAvatarBorder(colour, el) {
+  if (!requirePro('Avatar border colour')) return;
+  const preview = document.getElementById('edit-avatar-preview');
+  if (preview) {
+    // For gradients we can't use border-color — use outline trick or box-shadow
+    if (colour.startsWith('linear-gradient')) {
+      preview.style.border = 'none';
+      preview.style.padding = '3px';
+      preview.style.background = colour;
+    } else {
+      preview.style.padding = '';
+      preview.style.background = '';
+      preview.style.border = `3px solid ${colour}`;
+    }
+    localStorage.setItem('fs_avatar_border', colour);
+  }
+  document.querySelectorAll('#avatar-border-picker div').forEach(d => d.style.outline = 'none');
+  if (el) el.style.outline = '3px solid var(--black)';
 }
 
 function cancelCrop() {
@@ -4914,17 +4975,14 @@ function cancelCrop() {
 }
 
 function confirmCrop() {
-  const canvas = document.getElementById('crop-canvas');
-  // Export at 400x400 for quality
+  // Export at 400x400 — scale from CROP_SIZE (300) preview
   const out = document.createElement('canvas');
   out.width = 400; out.height = 400;
   const ctx = out.getContext('2d');
-  // Clip to circle
   ctx.beginPath();
   ctx.arc(200, 200, 200, 0, Math.PI * 2);
   ctx.clip();
-  // Scale coords from 280 preview to 400 export
-  const ratio = 400 / 280;
+  const ratio = 400 / CROP_SIZE;
   ctx.drawImage(_cropImg, _cropX * ratio, _cropY * ratio, _cropImg.width * _cropScale * ratio, _cropImg.height * _cropScale * ratio);
   const dataUrl = out.toDataURL('image/jpeg', 0.88);
   _pendingAvatarImage = dataUrl;
@@ -4952,6 +5010,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+let _handleCheckTimer = null;
+let _handleAvailable = null; // true/false/null(unchecked)
+
+async function checkHandleAvailability(val) {
+  const status = document.getElementById('handle-status');
+  const raw = val.replace(/^@/,'').toLowerCase().replace(/[^a-z0-9_.]/g,'');
+  if (!raw || raw.length < 2) {
+    status.textContent = '';
+    _handleAvailable = null;
+    return;
+  }
+  const handle = '@' + raw;
+  // Don't check if it's same as current handle
+  if (handle === userHandle) {
+    status.textContent = '✓ Your current username';
+    status.style.color = 'var(--gray-400)';
+    _handleAvailable = true;
+    return;
+  }
+  status.textContent = 'Checking…';
+  status.style.color = 'var(--gray-400)';
+  clearTimeout(_handleCheckTimer);
+  _handleCheckTimer = setTimeout(async () => {
+    const { data } = await _supaClient.from('profiles').select('id').eq('handle', handle).maybeSingle();
+    if (data && data.id !== currentSupaUser?.id) {
+      status.textContent = '✕ Already taken';
+      status.style.color = '#f43f5e';
+      _handleAvailable = false;
+    } else {
+      status.textContent = '✓ Available';
+      status.style.color = '#10b981';
+      _handleAvailable = true;
+    }
+  }, 400);
+}
+
 function applyAvatarImageEverywhere(dataUrl) {
   // Replace all our own avatar spots with the photo
   document.querySelectorAll('.avatar-lg').forEach(a => {
@@ -4976,11 +5070,18 @@ async function saveProfile() {
   const rawEditHandle = (document.getElementById('edit-handle')?.value.trim() || userHandle).replace('@','').toLowerCase().replace(/[^a-z0-9_.]/g,'');
   const newHandle = '@' + rawEditHandle;
 
-  // If handle changed, check it's not taken
+  // If handle changed, block if taken (live check result) or recheck
   if (newHandle !== userHandle) {
+    if (_handleAvailable === false) {
+      showToast('That username is already taken ✕');
+      return;
+    }
+    // Final server check just in case
     const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', newHandle).maybeSingle();
     if (taken && taken.id !== currentSupaUser?.id) {
       showToast('That username is already taken ✕');
+      document.getElementById('handle-status').textContent = '✕ Already taken';
+      document.getElementById('handle-status').style.color = '#f43f5e';
       return;
     }
   }
@@ -5172,7 +5273,10 @@ function applyProfileToUI(profile) {
   // Update all name/handle/avatar spots
   userName = name;
   userHandle = handle;
-  document.querySelectorAll('.avatar-lg').forEach(a => { if (a.textContent.length <= 2) a.textContent = initial; });
+  // Only set initial letter if no photo uploaded
+  if (!userAvatarImage) {
+    document.querySelectorAll('.avatar-lg').forEach(a => { if (a.textContent.length <= 2) a.textContent = initial; });
+  }
   const settingsName = document.getElementById('settings-name');
   if (settingsName) settingsName.textContent = name + (userEmoji ? ' ' + userEmoji : '');
   const settingsEmail = document.querySelector('.settings-user .email');
@@ -5851,20 +5955,31 @@ async function handleQRResult(data) {
 }
 </script>
 <!-- ========== AVATAR CROP MODAL ========== -->
-<div id="avatar-crop-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.95);flex-direction:column;align-items:center;justify-content:center;">
-  <div style="color:white;font-size:16px;font-weight:700;margin-bottom:16px;text-align:center;">Move and zoom to crop</div>
-  <!-- Circular crop preview -->
-  <div style="position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;border:3px solid white;flex-shrink:0;touch-action:none;" id="crop-container">
-    <canvas id="crop-canvas" style="position:absolute;cursor:grab;touch-action:none;"></canvas>
+<div id="avatar-crop-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);flex-direction:column;align-items:center;justify-content:center;">
+  <div style="color:white;font-size:16px;font-weight:700;margin-bottom:20px;text-align:center;">Move and zoom to crop</div>
+  <!-- Canvas fills full width, circle cut-out drawn on top -->
+  <div style="position:relative;width:300px;height:300px;flex-shrink:0;touch-action:none;" id="crop-container">
+    <!-- The actual image canvas, full square -->
+    <canvas id="crop-canvas" style="position:absolute;top:0;left:0;width:300px;height:300px;cursor:grab;touch-action:none;border-radius:8px;"></canvas>
+    <!-- SVG overlay: dark everywhere except the circle -->
+    <svg id="crop-overlay" viewBox="0 0 300 300" style="position:absolute;top:0;left:0;width:300px;height:300px;pointer-events:none;">
+      <defs>
+        <mask id="hole">
+          <rect width="300" height="300" fill="white"/>
+          <circle cx="150" cy="150" r="140" fill="black"/>
+        </mask>
+      </defs>
+      <rect width="300" height="300" fill="rgba(0,0,0,0.55)" mask="url(#hole)"/>
+      <circle cx="150" cy="150" r="140" fill="none" stroke="white" stroke-width="2.5"/>
+    </svg>
   </div>
-  <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:12px;">Pinch to zoom · Drag to reposition</div>
-  <!-- Zoom slider -->
-  <div style="display:flex;align-items:center;gap:10px;margin-top:16px;width:240px;">
+  <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:14px;">Pinch to zoom · Drag to reposition</div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:14px;width:260px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
     <input type="range" id="crop-zoom" min="1" max="4" step="0.01" value="1" style="flex:1;accent-color:white;" oninput="cropZoomChanged()">
     <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </div>
-  <div style="display:flex;gap:12px;margin-top:24px;width:240px;">
+  <div style="display:flex;gap:12px;margin-top:20px;width:260px;">
     <button onclick="cancelCrop()" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.3);background:none;color:white;font-size:14px;font-weight:700;cursor:pointer;">Cancel</button>
     <button onclick="confirmCrop()" style="flex:1;padding:14px;border-radius:14px;border:none;background:white;color:black;font-size:14px;font-weight:700;cursor:pointer;">Use Photo</button>
   </div>
