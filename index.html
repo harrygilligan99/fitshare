@@ -724,11 +724,6 @@
         <button onclick="showForgotPassword()" style="background:none;border:none;color:#2DD4BF;font-size:13px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
       </div>
 
-      <div style="text-align:center;margin-top:4px;">
-        <span style="font-size:13px;color:#6b7280;">Forgot password? </span>
-        <span onclick="doForgotPassword()" style="font-size:13px;color:#2DD4BF;cursor:pointer;font-weight:600;">Reset it</span>
-      </div>
-
       <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
         <div style="flex:1;height:1px;background:#374151;"></div>
         <span style="font-size:12px;color:#6b7280;">or</span>
@@ -1450,9 +1445,6 @@
     </div>
     <div id="tab-borrow-requests" class="friends-section" style="display:none">
       <div id="friend-requests-list"></div>
-      <div style="border-top:1px solid var(--gray-100);margin:8px 0 0;"></div>
-      <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:14px 16px 8px;">Borrow Requests</div>
-      <div id="borrow-requests-list"></div>
     </div>
   </div>
 </div>
@@ -2245,7 +2237,7 @@ function cardHTML(item, isOwn) {
     : `<div class="placeholder-icon">${item.emoji || '\uD83D\uDC55'}</div>`;
 
   return `
-    <div class="feed-card" onclick="openItemDetail(${item.id || "'"+item.localId+"'"})">
+    <div class="feed-card" onclick="openItemDetail('${item.id || item.localId}')">
       <div class="feed-card-img">${thumbContent}</div>
       <div class="feed-card-body">
         <div class="feed-card-user">
@@ -2256,8 +2248,8 @@ function cardHTML(item, isOwn) {
         <div class="feed-card-size">Size ${item.size}</div>
         <div class="feed-card-actions">
           ${isOwn ? '<span style="font-size:11px;color:var(--gray-400)">Your item</span>' :
-            `<button class="borrow-btn ${item.requested?'requested':''}" onclick="event.stopPropagation();openBorrow(${item.id || "'"+item.localId+"'"})">${item.requested?'Requested':'Borrow'}</button>`}
-          <button class="like-btn ${item.liked?'liked':''}" onclick="event.stopPropagation();toggleLike(${item.id || "'"+item.localId+"'"})">
+            `<button class="borrow-btn ${item.requested?'requested':''}" onclick="event.stopPropagation();openBorrow('${item.id || item.localId}')">${item.requested?'Requested':'Borrow'}</button>`}
+          <button class="like-btn ${item.liked?'liked':''}" onclick="event.stopPropagation();toggleLike('${item.id || item.localId}')">
             <svg viewBox="0 0 24 24" fill="${item.liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
             ${item.likes}
           </button>
@@ -2575,7 +2567,7 @@ function openItemDetail(id) {
       <div class="price">${esc(item.affiliate.price)}</div>
       <button class="shop-btn" onclick="showToast('Opening shop link...')">Shop Now \u2192</button>
     </div>` : ''}
-    ${!isOwn ? `<button class="item-detail-borrow-btn" onclick="openBorrow(${typeof id === 'number' ? id : "'"+id+"'"})">${item.requested ? '\u2713 Already Requested' : 'Request to Borrow'}</button>` : ''}
+    ${!isOwn ? `<button class="item-detail-borrow-btn" onclick="openBorrow('${id}')">${item.requested ? '\u2713 Already Requested' : 'Request to Borrow'}</button>` : ''}
   `;
   showScreen('item-detail');
 }
@@ -3319,15 +3311,19 @@ async function loadBorrowRequests() {
 function renderFriends() {
   const el = document.getElementById('friends-list');
   if (!el) return;
-  el.innerHTML = friends.length ? friends.map(f => `
-    <div class="friend-row">
-      <div class="notif-avatar" style="background:${esc(f.color)}">${esc(f.avatar)}</div>
-      <div class="friend-info">
+  el.innerHTML = friends.length ? friends.map(f => {
+    const avatarContent = f.avatarUrl
+      ? `<img src="${f.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : esc(f.avatar);
+    return `<div class="friend-row" style="cursor:pointer;" onclick="openUserProfile('${f.id}')">
+      <div class="notif-avatar" style="background:${esc(f.color)};overflow:hidden;padding:0;">${avatarContent}</div>
+      <div class="friend-info" style="flex:1;">
         <div class="fname">${esc(f.name)}</div>
         <div class="fhandle">${esc(f.handle)}</div>
       </div>
-      <button class="btn-add-friend following" onclick="unfollowFriend('${f.id}',this)" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-200);">Friends ✓</button>
-    </div>`).join('') :
+      <button class="btn-add-friend following" onclick="event.stopPropagation();unfollowFriend('${f.id}',this)" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-200);">Friends ✓</button>
+    </div>`;
+  }).join('') :
     `<div style="text-align:center;padding:40px 20px;">
       <div style="font-size:40px;margin-bottom:12px;">👗</div>
       <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">No friends yet</div>
@@ -3451,10 +3447,10 @@ async function searchFriends() {
       const avatarContent = p.avatar_url
         ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
         : esc(name[0]?.toUpperCase()||'U');
-      return `<div class="friend-row">
+      return `<div class="friend-row" style="cursor:pointer;" onclick="openUserProfile('${p.id}')">
         <div class="notif-avatar" style="background:${colour};overflow:hidden;padding:0;">${avatarContent}</div>
-        <div class="friend-info"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
-        <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Friends':'Add Friend'}</button>
+        <div class="friend-info" style="flex:1;"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
+        <button class="btn-add-friend ${isFollowing?'following':''}" onclick="event.stopPropagation();toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Friends':'Add Friend'}</button>
       </div>`;
     }).join('');
   }, 250); // 250ms debounce
@@ -3500,13 +3496,13 @@ function renderFriendRequests() {
       const avatarContent = p.avatarUrl
         ? `<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
         : p.avatar;
-      return `<div class="friend-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
+      return `<div class="friend-row" data-freq-id="${p.id}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
         <div class="notif-avatar" style="background:${p.color};overflow:hidden;padding:0;">${avatarContent}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;font-size:14px;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
           <div style="font-size:12px;color:var(--gray-500);">${p.handle}</div>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div class="freq-action-btns" style="display:flex;gap:8px;">
           <button onclick="acceptFriendRequest('${p.id}')" title="Accept" style="width:38px;height:38px;border-radius:50%;border:none;background:#22c55e;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
@@ -3548,6 +3544,20 @@ function renderFriendRequests() {
 }
 
 async function acceptFriendRequest(userId) {
+  // Find the row and show "Accepted" state immediately
+  const row = document.querySelector(`[data-freq-id="${userId}"]`);
+  if (row) {
+    const btns = row.querySelector('.freq-action-btns');
+    if (btns) {
+      btns.innerHTML = '<span style="font-size:12px;font-weight:600;color:var(--gray-400);background:var(--gray-100);padding:6px 14px;border-radius:20px;">Accepted ✓</span>';
+    }
+    // Fade out after 1.2s
+    setTimeout(() => {
+      row.style.transition = 'opacity 0.4s';
+      row.style.opacity = '0';
+      setTimeout(() => row.remove(), 400);
+    }, 1200);
+  }
   await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: userId });
   showToast('✓ Friend added!');
   await loadFriends();
@@ -3566,6 +3576,80 @@ async function cancelFriendRequest(userId) {
   sentRequests = sentRequests.filter(r => r.id !== userId);
   showToast('Request cancelled');
   await loadFriends();
+}
+
+function openUserProfile(userId) {
+  // Find profile data — from friends list, search results, or otherItems owners
+  const friend = friends.find(f => f.id === userId)
+    || incomingRequests.find(r => r.id === userId)
+    || sentRequests.find(r => r.id === userId);
+
+  // Build profile screen content
+  const name = friend?.name || 'User';
+  const handle = friend?.handle || '';
+  const color = friend?.color || '#2DD4BF';
+  const avatarUrl = friend?.avatarUrl || null;
+  const avatarContent = avatarUrl
+    ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : `<span style="font-size:28px;font-weight:800;color:white;">${name[0]?.toUpperCase()||'U'}</span>`;
+
+  // Their items
+  const theirItems = otherItems.filter(i => i.user_id === userId);
+  const isFollowing = friends.some(f => f.id === userId);
+
+  const itemsHTML = theirItems.length > 0
+    ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 24px;">
+        ${theirItems.map(item => `
+          <div style="border-radius:14px;overflow:hidden;background:var(--card-bg);border:1px solid var(--gray-200);cursor:pointer;" onclick="openItemDetail('${item.id}')">
+            <div style="aspect-ratio:3/4;background:var(--gray-100);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              ${item.imageData ? `<img src="${item.imageData}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:36px;">${item.emoji||'👕'}</span>`}
+            </div>
+            <div style="padding:8px 10px;">
+              <div style="font-size:13px;font-weight:600;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
+              <div style="font-size:11px;color:var(--gray-500);">Size ${item.size}</div>
+            </div>
+          </div>`).join('')}
+      </div>`
+    : `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);">
+        <div style="font-size:36px;margin-bottom:8px;">👗</div>
+        <div style="font-size:13px;">No items shared yet</div>
+      </div>`;
+
+  const profileScreen = document.getElementById('screen-user-profile');
+  if (!profileScreen) {
+    // Create the screen if it doesn't exist
+    const div = document.createElement('div');
+    div.className = 'screen';
+    div.id = 'screen-user-profile';
+    div.style.cssText = 'padding:0;overflow-y:auto;';
+    document.body.appendChild(div);
+  }
+
+  document.getElementById('screen-user-profile').innerHTML = `
+    <div style="position:sticky;top:0;z-index:10;background:var(--topbar-bg);border-bottom:1px solid var(--gray-200);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+      <button onclick="goBack()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--black);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:22px;height:22px;"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span style="font-size:16px;font-weight:800;color:var(--black);">${esc(handle) || esc(name)}</span>
+    </div>
+    <div style="padding:24px 16px 16px;display:flex;align-items:center;gap:16px;">
+      <div style="width:72px;height:72px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${avatarContent}</div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--black);">${esc(name)}</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${esc(handle)}</div>
+        <div style="margin-top:10px;">
+          <button onclick="event.stopPropagation();toggleFollow('${userId}','${esc(name)}',this)" class="btn-add-friend ${isFollowing?'following':''}" style="padding:8px 20px;font-size:13px;">
+            ${isFollowing ? 'Friends ✓' : 'Add Friend'}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 16px 8px;border-top:1px solid var(--gray-100);padding-top:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:12px;">${theirItems.length} item${theirItems.length!==1?'s':''}</div>
+    </div>
+    ${itemsHTML}
+  `;
+  showScreen('user-profile');
 }
 
 async function unfollowFriend(userId, btn) {
@@ -5282,6 +5366,8 @@ function confirmCrop() {
   const dataUrl = out.toDataURL('image/jpeg', 0.88);
   document.getElementById('avatar-crop-modal').style.display = 'none';
   _cropImg = null;
+  // Store as pending so saveProfile() picks it up
+  _pendingAvatarImage = dataUrl;
   // Show immediately in edit preview
   refreshEditAvatarPreview(dataUrl);
   showToast('Looking good! Tap Save to apply ✓');
@@ -5807,16 +5893,16 @@ async function doLogin() {
     const raw = error.message || String(error);
     console.error('[LOGIN] raw error:', raw);
     let msg = raw;
-    if (raw.includes('Invalid login credentials') || raw.includes('invalid_credentials')) msg = 'Wrong email or password';
-    else if (raw.includes('Email not confirmed') || raw.includes('email_not_confirmed')) msg = 'Email not confirmed — check your inbox or use Google login';
-    else if (raw.includes('fetch') || raw.includes('network') || raw.includes('Failed to fetch')) msg = 'Connection error — try again';
-    else if (raw.includes('rate limit') || raw.includes('too many')) msg = 'Too many attempts — wait a minute and try again';
-    showAuthError('login', msg + ' (tap for help)');
-    document.getElementById('login-error').onclick = () => {
-      if (raw.includes('Email not confirmed')) {
-        showToast('Go to Supabase → Auth → Settings → disable email confirmation');
-      }
-    };
+    if (raw.includes('Invalid login credentials') || raw.includes('invalid_credentials')) {
+      msg = 'Wrong email or password. If you signed up with Google, use the Google button or tap "Forgot password?" to set a password.';
+    } else if (raw.includes('Email not confirmed') || raw.includes('email_not_confirmed')) {
+      msg = 'Email not confirmed — check your inbox, or use "Forgot password?" to resend.';
+    } else if (raw.includes('fetch') || raw.includes('network') || raw.includes('Failed to fetch')) {
+      msg = 'Connection error — check your internet and try again';
+    } else if (raw.includes('rate limit') || raw.includes('too many')) {
+      msg = 'Too many attempts — wait a minute and try again';
+    }
+    showAuthError('login', msg);
     return;
   }
 
@@ -5838,15 +5924,28 @@ async function doLogin() {
 }
 
 // == FORGOT PASSWORD ==
-function showForgotPassword() {
-  // Pre-fill with whatever email is in the login field
+async function showForgotPassword() {
   const loginEmail = document.getElementById('login-email')?.value?.trim();
-  if (loginEmail) document.getElementById('reset-email-input').value = loginEmail;
-  document.getElementById('reset-msg').style.display = 'none';
-  document.getElementById('reset-send-btn').textContent = 'Send Reset Link';
-  document.getElementById('reset-send-btn').disabled = false;
-  const modal = document.getElementById('forgot-password-modal');
-  modal.style.display = 'flex';
+  if (loginEmail) {
+    // Email already filled — send immediately
+    const btn = document.querySelector('[onclick="showForgotPassword()"]');
+    if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+    const { error } = await _supaClient.auth.resetPasswordForEmail(loginEmail, {
+      redirectTo: 'https://fitshare.co.uk/?reset=1'
+    });
+    if (btn) { btn.textContent = 'Forgot password?'; btn.disabled = false; }
+    if (error) {
+      showToast('Could not send reset email — check the address');
+    } else {
+      showToast('Reset link sent to ' + loginEmail + ' ✓');
+    }
+  } else {
+    // No email — open the modal so they can type one
+    document.getElementById('reset-msg').style.display = 'none';
+    document.getElementById('reset-send-btn').textContent = 'Send Reset Link';
+    document.getElementById('reset-send-btn').disabled = false;
+    document.getElementById('forgot-password-modal').style.display = 'flex';
+  }
 }
 function closeForgotPassword() {
   document.getElementById('forgot-password-modal').style.display = 'none';
@@ -6023,6 +6122,7 @@ async function saveProfileToSupabase(name, handle) {
     display_name: name,
     handle: handle,
     avatar_color: userAvatarColour || '#2DD4BF',
+    avatar_url: userAvatarImage || null,
     updated_at: new Date().toISOString()
   };
   await _supaClient.from('profiles').upsert(updates);
