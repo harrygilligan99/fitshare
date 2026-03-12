@@ -5087,22 +5087,32 @@ async function checkHandleAvailability(val) {
   }, 400);
 }
 
+function _setAvatarEl(el, dataUrl) {
+  if (!el) return;
+  if (dataUrl) {
+    el.style.backgroundImage = `url('${dataUrl}')`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+    el.textContent = '';
+    // Also handle <img> children (edit preview)
+    const img = el.querySelector('img');
+    if (img) { img.src = dataUrl; img.style.display = 'block'; }
+  }
+}
+
 function applyAvatarImageEverywhere(dataUrl) {
-  // Replace all our own avatar spots with the photo
-  document.querySelectorAll('.avatar-lg').forEach(a => {
-    // clear text, show as background image
-    a.style.backgroundImage = `url('${dataUrl}')`;
-    a.style.backgroundSize = 'cover';
-    a.style.backgroundPosition = 'center';
-    a.textContent = '';
-  });
-  // also settings small avatar
-  const sa = document.getElementById('settings-avatar');
-  if (sa) {
-    sa.style.backgroundImage = `url('${dataUrl}')`;
-    sa.style.backgroundSize = 'cover';
-    sa.style.backgroundPosition = 'center';
-    sa.textContent = '';
+  if (!dataUrl) return;
+  // All .avatar-lg elements (home profile, etc)
+  document.querySelectorAll('.avatar-lg').forEach(a => _setAvatarEl(a, dataUrl));
+  // Settings avatar
+  _setAvatarEl(document.getElementById('settings-avatar'), dataUrl);
+  // QR screen avatar
+  const qrAv = document.getElementById('qr-avatar');
+  if (qrAv) {
+    qrAv.style.backgroundImage = `url('${dataUrl}')`;
+    qrAv.style.backgroundSize = 'cover';
+    qrAv.style.backgroundPosition = 'center';
+    qrAv.textContent = '';
   }
 }
 
@@ -5498,9 +5508,11 @@ async function doLogin() {
   btn.disabled = false;
 
   if (error) {
-    showAuthError('login', error.message === 'Invalid login credentials'
-      ? 'Wrong email or password'
-      : error.message);
+    let msg = error.message;
+    if (msg === 'Invalid login credentials') msg = 'Wrong email or password';
+    else if (msg.includes('Failed to fetch') || msg.includes('fetch')) msg = 'Connection error — check your internet or try again';
+    else if (msg.includes('Email not confirmed')) msg = 'Please confirm your email first — check your inbox';
+    showAuthError('login', msg);
     return;
   }
 
@@ -5757,14 +5769,27 @@ function showAuthError(screen, msg) {
 // ==========================================
 
 function openQRScreen() {
-  // Sync profile info to QR card
   const name = userName || 'harry';
-  const handle = document.getElementById('edit-handle')?.value || '@54024831';
+  const handle = userHandle || '@54024831';
   const initial = name[0]?.toLowerCase() || 'h';
 
   document.getElementById('qr-name').textContent = name;
   document.getElementById('qr-handle').textContent = handle;
-  document.getElementById('qr-avatar').textContent = initial;
+
+  // Apply avatar photo or fallback to initial
+  const qrAv = document.getElementById('qr-avatar');
+  if (qrAv) {
+    const photo = userAvatarImage || currentProfile?.avatar_url;
+    if (photo) {
+      qrAv.style.backgroundImage = `url('${photo}')`;
+      qrAv.style.backgroundSize = 'cover';
+      qrAv.style.backgroundPosition = 'center';
+      qrAv.textContent = '';
+    } else {
+      qrAv.style.backgroundImage = '';
+      qrAv.textContent = initial;
+    }
+  }
 
   showScreen('qr');
   // Generate after screen is visible
