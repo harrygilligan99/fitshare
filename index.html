@@ -2310,7 +2310,7 @@ async function searchPeople(q) {
         <div style="font-size:12px;color:var(--gray-500);">${esc(p.handle||'')}</div>
       </div>
       <button onclick="toggleFollowFromSearch('${p.id}',this)" style="padding:8px 16px;border-radius:20px;border:1.5px solid ${isFriend?'var(--gray-300)':'var(--black)'};background:${isFriend?'white':'var(--black)'};color:${isFriend?'var(--gray-700)':'white'};font-size:12px;font-weight:700;cursor:pointer;">
-        ${isFriend ? 'Following' : '+ Follow'}
+        ${isFriend ? 'Friends' : 'Add Friend'}
       </button>
     </div>`;
   }).join('');
@@ -2321,7 +2321,7 @@ async function toggleFollowFromSearch(userId, btn) {
   if (isFriend) {
     await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
     friends = friends.filter(f => f.id !== userId);
-    btn.textContent = '+ Follow';
+    btn.textContent = 'Add Friend';
     btn.style.background = 'var(--black)';
     btn.style.color = 'white';
     btn.style.borderColor = 'var(--black)';
@@ -2332,11 +2332,11 @@ async function toggleFollowFromSearch(userId, btn) {
       const name = p.display_name || p.handle || 'User';
       friends.push({ id: p.id, name, handle: p.handle||'@user', avatar: name[0]?.toUpperCase()||'?', color: p.avatar_color||'#2DD4BF' });
     }
-    btn.textContent = 'Following';
+    btn.textContent = 'Request Sent ✓';
     btn.style.background = 'white';
     btn.style.color = 'var(--gray-700)';
     btn.style.borderColor = 'var(--gray-300)';
-    showToast('Following ' + (btn.closest('[style]')?.querySelector('[style*="font-weight:700"]')?.textContent || '') + ' ✓');
+    showToast('Friend request sent! 👋');
   }
 }
 
@@ -3266,7 +3266,7 @@ function renderFriends() {
         <div class="fname">${esc(f.name)}</div>
         <div class="fhandle">${esc(f.handle)}</div>
       </div>
-      <button class="btn-add-friend following" onclick="unfollowFriend('${f.id}',this)">Following</button>
+      <button class="btn-add-friend following" onclick="unfollowFriend('${f.id}',this)" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-200);">Friends ✓</button>
     </div>`).join('') :
     `<div style="text-align:center;padding:40px 20px;">
       <div style="font-size:40px;margin-bottom:12px;">👗</div>
@@ -3394,7 +3394,7 @@ async function searchFriends() {
       return `<div class="friend-row">
         <div class="notif-avatar" style="background:${colour};overflow:hidden;padding:0;">${avatarContent}</div>
         <div class="friend-info"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
-        <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Following':'Follow'}</button>
+        <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Friends':'Add Friend'}</button>
       </div>`;
     }).join('');
   }, 250); // 250ms debounce
@@ -3405,12 +3405,12 @@ async function toggleFollow(userId, name, btn) {
   if (isFollowing) {
     await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
     friends = friends.filter(f => f.id !== userId);
-    btn.textContent = 'Follow'; btn.classList.remove('following');
-    showToast('Unfollowed ' + name);
+    btn.textContent = 'Add Friend'; btn.classList.remove('following');
+    showToast('Friend removed');
   } else {
     await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: userId });
-    btn.textContent = 'Following'; btn.classList.add('following');
-    showToast('Following ' + name + '!');
+    btn.textContent = 'Request Sent ✓'; btn.classList.add('following');
+    showToast('Friend request sent to ' + name + '! 👋');
     await loadFriends();
     // reload feed with new friend's items
     loadOtherItems();
@@ -3999,34 +3999,111 @@ function applyTheme(id) {
   if (!theme) return;
   activeThemeId = id;
   const root = document.documentElement;
-  // Reset defaults
+
   const defaults = {
     '--bg':'#ffffff','--bg2':'#f9fafb','--card-bg':'#f9fafb','--nav-bg':'#ffffff',
     '--topbar-bg':'#ffffff','--black':'#111111','--white':'#ffffff',
     '--gray-50':'#f9fafb','--gray-100':'#f3f4f6','--gray-200':'#e5e7eb',
-    '--gray-400':'#9ca3af','--gray-500':'#6b7280','--gray-700':'#374151'
+    '--gray-300':'#d1d5db','--gray-400':'#9ca3af','--gray-500':'#6b7280','--gray-700':'#374151',
+    '--input-bg':'#f9fafb','--input-border':'#e5e7eb','--input-text':'#111111',
+    '--btn-secondary-bg':'#f3f4f6','--btn-secondary-text':'#111111',
+    '--border-color':'#e5e7eb','--shadow':'rgba(0,0,0,0.06)'
   };
   Object.entries(defaults).forEach(([k,v]) => root.style.setProperty(k,v));
   if (theme.css) Object.entries(theme.css).forEach(([k,v]) => root.style.setProperty(k,v));
 
-  // Apply body bg
-  document.body.style.backgroundColor = theme.css?.['--bg'] || '#fff';
+  // Dark-specific overrides
+  if (theme.dark) {
+    const bg = theme.css?.['--bg'] || '#0d0d0d';
+    const card = theme.css?.['--card-bg'] || '#1e1e1e';
+    const text = theme.css?.['--black'] || '#ffffff';
+    root.style.setProperty('--input-bg', card);
+    root.style.setProperty('--input-border', theme.css?.['--gray-200'] || '#2a2a2a');
+    root.style.setProperty('--input-text', text);
+    root.style.setProperty('--btn-secondary-bg', card);
+    root.style.setProperty('--btn-secondary-text', text);
+    root.style.setProperty('--border-color', theme.css?.['--gray-200'] || '#2a2a2a');
+    root.style.setProperty('--shadow', 'rgba(0,0,0,0.3)');
+  }
 
-  // Repaint all screens + nav
-  document.querySelectorAll('.screen').forEach(s => s.style.background = theme.css?.['--bg']||'#fff');
-  document.querySelectorAll('.topbar,.chat-topbar').forEach(t => t.style.background = theme.css?.['--topbar-bg']||'#fff');
-  document.querySelectorAll('.chat-input-bar,.tnc-accept-bar').forEach(t => t.style.background = theme.css?.['--topbar-bg']||'#fff');
-  const nav = document.querySelector('.bottom-nav');
-  if (nav) nav.style.background = theme.css?.['--nav-bg']||'#fff';
-  document.querySelectorAll('.feed-card').forEach(c => c.style.background = theme.css?.['--card-bg']||'#f9fafb');
-  document.querySelectorAll('.modal').forEach(m => {
-    m.style.background = theme.dark ? '#1f2937' : '#ffffff';
-    if (theme.dark) m.style.color = '#ffffff';
+  const bg = theme.css?.['--bg'] || '#fff';
+  const card = theme.css?.['--card-bg'] || '#f9fafb';
+  const topbar = theme.css?.['--topbar-bg'] || '#fff';
+  const nav = theme.css?.['--nav-bg'] || '#fff';
+  const text = theme.css?.['--black'] || '#111';
+  const gray1 = theme.css?.['--gray-100'] || '#f3f4f6';
+  const gray2 = theme.css?.['--gray-200'] || '#e5e7eb';
+  const isDark = !!theme.dark;
+
+  document.body.style.backgroundColor = bg;
+  document.body.style.color = text;
+
+  // All screens
+  document.querySelectorAll('.screen').forEach(s => { s.style.background = bg; s.style.color = text; });
+
+  // Top bars & nav
+  document.querySelectorAll('.topbar,.chat-topbar').forEach(t => { t.style.background = topbar; t.style.borderBottomColor = gray2; });
+  document.querySelectorAll('.chat-input-bar,.tnc-accept-bar').forEach(t => { t.style.background = topbar; t.style.borderTopColor = gray2; });
+  const navEl = document.querySelector('.bottom-nav');
+  if (navEl) { navEl.style.background = nav; navEl.style.borderTopColor = gray2; }
+
+  // Cards & list items
+  document.querySelectorAll('.feed-card,.settings-row,.friend-row,.item-card,.wardrobe-item').forEach(c => {
+    c.style.background = card;
+    c.style.borderColor = gray2;
+    c.style.color = text;
   });
+  // Section labels and headings
+  document.querySelectorAll('.feed-section-label,.settings-section-label,.section-title,.screen h2,.screen h3').forEach(el => {
+    el.style.color = text;
+  });
+
+  // Modals & bottom sheets
+  document.querySelectorAll('.modal,.bottom-sheet,.modal-sheet,.manage-groups-modal,.create-group-modal').forEach(m => {
+    m.style.background = isDark ? (theme.css?.['--bg2'] || '#1a1a1a') : '#ffffff';
+    m.style.color = text;
+  });
+
+  // Inputs — needs inline style override since they have inline styles
+  document.querySelectorAll('input:not([type=checkbox]):not([type=radio]), textarea, select').forEach(el => {
+    if (!el.closest('#screen-login, #screen-signup')) { // keep login dark style
+      el.style.background = isDark ? (theme.css?.['--gray-100'] || '#1a1a1a') : '';
+      el.style.color = text;
+      el.style.borderColor = gray2;
+    }
+  });
+
+  // Search bars
+  document.querySelectorAll('.search-bar').forEach(el => { el.style.background = card; el.style.borderColor = gray2; });
+
+  // Tab bars
+  document.querySelectorAll('.tab-bar,.tabs,.ftab-bar').forEach(el => { el.style.background = bg; el.style.borderBottomColor = gray2; });
+  document.querySelectorAll('.tab,.ftab').forEach(el => { el.style.color = text; });
+
+  // Scroll content areas
+  document.querySelectorAll('.scroll-content,.friends-section,.inbox-list').forEach(el => { el.style.background = bg; });
+
+  // QR card
   const qrCard = document.getElementById('qr-card');
-  if (qrCard) qrCard.style.background = theme.css?.['--topbar-bg'] || '#fff';
+  if (qrCard) { qrCard.style.background = card; }
+
+  // Profile area
+  document.querySelectorAll('.profile-card,.wardrobe-header').forEach(el => { el.style.background = bg; });
+
+  // Secondary buttons
+  document.querySelectorAll('.btn-secondary,.filter-chip:not(.active)').forEach(el => {
+    el.style.background = card; el.style.color = text; el.style.borderColor = gray2;
+  });
+
+  // Settings rows separator
+  document.querySelectorAll('.settings-row').forEach(r => { r.style.borderBottomColor = gray2; });
+
+  // Items grid placeholders
+  document.querySelectorAll('.item-placeholder,.photo-placeholder').forEach(el => { el.style.background = gray1; });
+
+  localStorage.setItem('fs_theme', id);
   renderThemeGrid();
-  showToast(`${theme.name} theme applied!`);
+  showToast(\`\${theme.name} applied!\`);
 }
 
 // ==========================================
@@ -5564,12 +5641,19 @@ async function doLogin() {
   btn.disabled = false;
 
   if (error) {
-    let msg = error.message || String(error);
-    console.error('[LOGIN] error:', msg);
-    if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) msg = 'Wrong email or password';
-    else if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) msg = 'Please confirm your email — check your inbox';
-    else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) msg = 'Connection error — try again';
-    showAuthError('login', msg);
+    const raw = error.message || String(error);
+    console.error('[LOGIN] raw error:', raw);
+    let msg = raw;
+    if (raw.includes('Invalid login credentials') || raw.includes('invalid_credentials')) msg = 'Wrong email or password';
+    else if (raw.includes('Email not confirmed') || raw.includes('email_not_confirmed')) msg = 'Email not confirmed — check your inbox or use Google login';
+    else if (raw.includes('fetch') || raw.includes('network') || raw.includes('Failed to fetch')) msg = 'Connection error — try again';
+    else if (raw.includes('rate limit') || raw.includes('too many')) msg = 'Too many attempts — wait a minute and try again';
+    showAuthError('login', msg + ' (tap for help)');
+    document.getElementById('login-error').onclick = () => {
+      if (raw.includes('Email not confirmed')) {
+        showToast('Go to Supabase → Auth → Settings → disable email confirmation');
+      }
+    };
     return;
   }
 
