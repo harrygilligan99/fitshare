@@ -1150,17 +1150,35 @@
     <div class="friends-tab-row">
       <div class="ftab active" onclick="showFTab(&#39;my-friends&#39;,this)">My Friends</div>
       <div class="ftab" onclick="showFTab(&#39;find-friends&#39;,this)">Find Friends</div>
-      <div class="ftab" onclick="showFTab(&#39;borrow-requests&#39;,this)">Requests <span id="req-badge" style="background:var(--red);color:white;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:2px;">2</span></div>
+      <div class="ftab" onclick="showFTab(&#39;borrow-requests&#39;,this)">Requests <span id="req-badge" style="background:var(--red);color:white;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:2px;display:none">0</span></div>
     </div>
     <div id="tab-my-friends" class="friends-section">
       <div id="friends-list"></div>
     </div>
     <div id="tab-find-friends" class="friends-section" style="display:none">
       <div class="add-friend-bar">
-        <input type="text" placeholder="Search by name or @handle..." id="friend-search-input">
-        <button onclick="searchFriends()">Search</button>
+        <input type="text" placeholder="Search by name or @handle…" id="friend-search-input" oninput="searchFriends()">
       </div>
-      <div id="friend-search-results"></div>
+      <div id="friend-search-results">
+        <div style="text-align:center;padding:32px 20px;">
+          <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+          <div style="font-size:14px;font-weight:600;color:var(--black);margin-bottom:4px;">Find your friends</div>
+          <div style="font-size:12px;color:var(--gray-500);">Search by name or @handle</div>
+        </div>
+      </div>
+      <div style="padding:16px 0 8px;border-top:1px solid var(--gray-100);margin-top:8px;">
+        <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Or invite friends</div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;" onclick="copyInviteLink()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Copy invite link
+          </button>
+          <button class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;" onclick="showScreen('qr')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="17" y="17" width="4" height="4"/></svg>
+            My QR code
+          </button>
+        </div>
+      </div>
     </div>
     <div id="tab-borrow-requests" class="friends-section" style="display:none">
       <div id="borrow-requests-list"></div>
@@ -1752,31 +1770,14 @@ let uploadedPhotoData = null;
 let currentCatFilter = 'All';
 let currentSizeFilter = 'All';
 
-const currentUser = { name: 'harry', handle: '@54024831', avatar: 'h' };
+// Real data only — no fake users
+let friends = [];     // loaded from Supabase (people this user follows)
 
-const friends = [
-  { id: 1, name: 'Emma', handle: '@emma_style', avatar: 'E', color: '#f472b6', following: true },
-  { id: 2, name: 'Jake', handle: '@jakefits', avatar: 'J', color: '#60a5fa', following: true },
-  { id: 3, name: 'Mia', handle: '@mia.wears', avatar: 'M', color: '#a78bfa', following: true },
-  { id: 4, name: 'Sam', handle: '@samclothes', avatar: 'S', color: '#34d399', following: false },
-  { id: 5, name: 'Lily', handle: '@lilyfit', avatar: 'L', color: '#fb923c', following: false },
-];
-
-const sampleItems = [
-  { id: 1, title: 'Vintage Denim Jacket', category: 'Outerwear', size: 'M', owner: 'Emma', ownerAvatar: 'E', ownerColor: '#f472b6', desc: 'Classic 90s denim, great condition. True to size.', emoji: '\uD83E\uDDE5', likes: 12, liked: false, requested: false, affiliate: { name: 'Levi\'s Trucker Jacket', price: '\u00A389.99', url: '#' } },
-  { id: 2, title: 'White Linen Shirt', category: 'Top', size: 'S', owner: 'Jake', ownerAvatar: 'J', ownerColor: '#60a5fa', desc: 'Lightweight linen, perfect for summer. Slightly oversized.', emoji: '\uD83D\uDC55', likes: 7, liked: false, requested: false, affiliate: { name: 'ASOS Linen Shirt', price: '\u00A329.99', url: '#' } },
-  { id: 3, title: 'Floral Midi Dress', category: 'Dress', size: 'S', owner: 'Mia', ownerAvatar: 'M', ownerColor: '#a78bfa', desc: 'Beautiful floral print, worn twice. Runs slightly small.', emoji: '\uD83D\uDC57', likes: 24, liked: true, requested: false, affiliate: { name: 'Similar Floral Dress', price: '\u00A345.00', url: '#' } },
-  { id: 4, title: 'Black Cargo Pants', category: 'Bottom', size: 'M', owner: 'Emma', ownerAvatar: 'E', ownerColor: '#f472b6', desc: 'Y2K style cargo trousers. Lots of pockets!', emoji: '\uD83D\uDC56', likes: 9, liked: false, requested: true, affiliate: { name: 'Cargo Trousers', price: '\u00A339.99', url: '#' } },
-  { id: 5, title: 'Chunky Knit Jumper', category: 'Top', size: 'L', owner: 'Jake', ownerAvatar: 'J', ownerColor: '#60a5fa', desc: 'Super cosy cream knit. Perfect for autumn/winter.', emoji: '\uD83E\uDDF6', likes: 18, liked: false, requested: false, affiliate: { name: 'Knit Jumper ASOS', price: '\u00A335.00', url: '#' } },
-  { id: 6, title: 'Leather Mini Skirt', category: 'Bottom', size: 'XS', owner: 'Mia', ownerAvatar: 'M', ownerColor: '#a78bfa', desc: 'Faux leather, edgy and chic. Fits true to size.', emoji: '\uD83D\uDDA4', likes: 31, liked: false, requested: false, affiliate: { name: 'PU Leather Mini Skirt', price: '\u00A322.00', url: '#' } },
-];
+const sampleItems = []; // real data only
 
 let myItems = [];
 let otherItems = []; // real items from other users in Supabase
-let borrowRequests = [
-  { id: 1, from: 'Emma', fromAvatar: 'E', fromColor: '#f472b6', item: 'My Blue Hoodie', fromDate: '2026-03-15', toDate: '2026-03-20', message: 'Hey! Love this, can I borrow for a party?', status: 'pending' },
-  { id: 2, from: 'Jake', fromAvatar: 'J', fromColor: '#60a5fa', item: 'Striped Tee', fromDate: '2026-03-18', toDate: '2026-03-22', message: '', status: 'pending' },
-];
+let borrowRequests = []; // loaded from Supabase
 
 // ==========================================
 // NAVIGATION
@@ -1826,7 +1827,7 @@ function showScreen(name) {
   if (name === 'explore')     renderExplore();
   if (name === 'wardrobe')    renderWardrobe();
   if (name === 'notifications') renderNotifications();
-  if (name === 'friends')     renderFriends();
+  if (name === 'friends')     { renderFriends(); loadFriends(); loadBorrowRequests(); }
   if (name === 'borrowed')    renderBorrowedTracker();
   if (name === 'calendar')    renderCalendar();
   if (name === 'messages')    renderInbox();
@@ -1913,7 +1914,7 @@ function cardHTML(item, isOwn) {
       <div class="feed-card-body">
         <div class="feed-card-user">
           <div class="avatar-xs" style="background:${item.ownerColor||'#2DD4BF'}">${item.ownerAvatar||'h'}</div>
-          <span class="feed-card-username">${item.owner||'harry'}</span>
+          <span class="feed-card-username">${item.owner||userName||''}</span>
         </div>
         <div class="feed-card-title">${item.title}</div>
         <div class="feed-card-size">Size ${item.size}</div>
@@ -1992,7 +1993,7 @@ function openItemDetail(id) {
       <p class="item-detail-desc">${esc(item.desc || '')}</p>
       <div class="item-detail-owner">
         <div class="avatar-xs" style="width:32px;height:32px;font-size:14px;background:${esc(item.ownerColor||'#2DD4BF')}">${esc(item.ownerAvatar||'h')}</div>
-        <p>Added by <strong>${esc(item.owner||'harry')}</strong></p>
+        <p>Added by <strong>${esc(item.owner||userName||'')}</strong></p>
       </div>
     </div>
     ${item.affiliate ? `
@@ -2017,7 +2018,7 @@ function openBorrow(id) {
   const thumb = document.getElementById('borrow-thumb');
   thumb.innerHTML = item.imageData ? `<img src="${item.imageData}" alt="${item.title}">` : item.emoji || '\uD83D\uDC55';
   document.getElementById('borrow-item-name').textContent = item.title;
-  document.getElementById('borrow-item-owner').textContent = 'Owner: ' + (item.owner || 'harry');
+  document.getElementById('borrow-item-owner').textContent = 'Owner: ' + (item.owner || userName || '');
   document.getElementById('borrow-item-size').textContent = 'Size: ' + item.size;
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('borrow-from').value = today;
@@ -2211,86 +2212,183 @@ function toggleLike(id) {
 // NOTIFICATIONS
 // ==========================================
 function renderNotifications() {
-  const notifs = [
-    { id:1, avatar:'E', color:'#f472b6', text:'<strong>Emma</strong> wants to borrow your <strong>Blue Hoodie</strong>', sub:'Mar 15\u201320', time:'2h ago', unread:true, type:'request' },
-    { id:2, avatar:'J', color:'#60a5fa', text:'<strong>Jake</strong> liked your <strong>Striped Tee</strong>', time:'5h ago', unread:true, type:'like' },
-    { id:3, avatar:'M', color:'#a78bfa', text:'<strong>Mia</strong> started following you', time:'1d ago', unread:false, type:'follow' },
-    { id:4, avatar:'E', color:'#f472b6', text:'<strong>Emma</strong> returned your <strong>Vintage Jacket</strong>', sub:'Deposit released \u2713', time:'2d ago', unread:false, type:'returned' },
-  ];
-  document.getElementById('notif-list').innerHTML = notifs.map(n => `
-    <div class="notif-item ${n.unread?'unread':''}" id="notif-${n.id}">
-      <div class="notif-avatar" style="background:${esc(n.color)}">${esc(n.avatar)}</div>
+  // Notifications are driven by real borrow requests for now
+  // Show pending borrow requests as notifications, plus empty state
+  const notifList = document.getElementById('notif-list');
+  if (!notifList) return;
+  const requestNotifs = borrowRequests.filter(r => r.status === 'pending');
+  if (requestNotifs.length === 0) {
+    notifList.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">🔔</div>
+        <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">All caught up!</div>
+        <div style="font-size:13px;color:var(--gray-500);">When friends request to borrow your items, you'll see it here.</div>
+      </div>`;
+    return;
+  }
+  notifList.innerHTML = requestNotifs.map(r => `
+    <div class="notif-item unread">
+      <div class="notif-avatar" style="background:${esc(r.fromColor)}">${esc(r.fromAvatar)}</div>
       <div class="notif-body">
-        <p>${n.text}</p>
-        ${n.sub ? `<div style="font-size:12px;color:var(--gray-500);margin-top:1px;">${n.sub}</div>` : ''}
-        <div class="notif-time">${n.time}</div>
-        ${n.type === 'request' ? `
-          <div class="notif-actions">
-            <button class="notif-view-btn" onclick="viewRequest(${n.id})">View Request \u2192</button>
-          </div>` : ''}
-        ${n.type === 'returned' ? `
-          <div class="notif-actions">
-            <button class="notif-view-btn" onclick="showScreen('borrowed')">View Tracker \u2192</button>
-          </div>` : ''}
+        <p><strong>${esc(r.from)}</strong> wants to borrow your <strong>${esc(r.item)}</strong></p>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:1px;">${esc(r.fromDate)} → ${esc(r.toDate)}</div>
+        <div class="notif-time">Just now</div>
+        <div class="notif-actions">
+          <button class="notif-view-btn" onclick="goToRequests()">View Request →</button>
+        </div>
       </div>
     </div>`).join('');
 }
 
-function viewRequest(notifId) {
-  // Mark as read
-  const el = document.getElementById('notif-' + notifId);
-  if (el) el.classList.remove('unread');
-  // Navigate to Friends \u2192 Requests tab
+function goToRequests() {
   showScreen('friends');
   setTimeout(() => {
     document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.ftab')[2].classList.add('active');
+    document.querySelectorAll('.ftab')[2]?.classList.add('active');
     ['my-friends','find-friends','borrow-requests'].forEach(t => {
       document.getElementById('tab-' + t).style.display = t === 'borrow-requests' ? 'block' : 'none';
     });
   }, 50);
 }
+function viewRequest(notifId) { goToRequests(); }
 
 // ==========================================
 // FRIENDS
 // ==========================================
+// ==========================================
+// FRIENDS — real Supabase data
+// ==========================================
+
+// Load people this user follows
+async function loadFriends() {
+  if (!currentSupaUser) return;
+  const { data } = await _supaClient
+    .from('follows')
+    .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, avatar_color)')
+    .eq('follower_id', currentSupaUser.id);
+  if (data) {
+    friends = data.map(row => {
+      const p = row.profiles || {};
+      const name = p.display_name || p.handle || 'User';
+      return { id: p.id, name, handle: p.handle || '@user', avatar: name[0]?.toUpperCase() || 'U', color: p.avatar_color || '#2DD4BF' };
+    });
+    renderFriends();
+  }
+}
+
+// Load borrow requests from Supabase
+async function loadBorrowRequests() {
+  if (!currentSupaUser) return;
+  const { data } = await _supaClient
+    .from('borrow_requests')
+    .select('*, items(title, emoji), profiles!borrow_requests_requester_id_fkey(display_name, handle, avatar_color)')
+    .eq('owner_id', currentSupaUser.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  if (data) {
+    borrowRequests = data.map(row => {
+      const p = row.profiles || {};
+      const name = p.display_name || p.handle || 'User';
+      return {
+        id: row.id,
+        from: name,
+        fromAvatar: name[0]?.toUpperCase() || 'U',
+        fromColor: p.avatar_color || '#60a5fa',
+        fromUserId: row.requester_id,
+        item: row.items?.title || 'Item',
+        itemEmoji: row.items?.emoji || '👕',
+        itemId: row.item_id,
+        fromDate: row.date_from,
+        toDate: row.date_to,
+        message: row.message || '',
+        status: row.status,
+        depositEnabled: false,
+        depositAmount: 20
+      };
+    });
+    renderBorrowRequests();
+  }
+}
+
 function renderFriends() {
-  const myFriends = friends.filter(f => f.following);
-  document.getElementById('friends-list').innerHTML = myFriends.length ? myFriends.map(f => `
+  const el = document.getElementById('friends-list');
+  if (!el) return;
+  el.innerHTML = friends.length ? friends.map(f => `
     <div class="friend-row">
       <div class="notif-avatar" style="background:${esc(f.color)}">${esc(f.avatar)}</div>
       <div class="friend-info">
         <div class="fname">${esc(f.name)}</div>
         <div class="fhandle">${esc(f.handle)}</div>
       </div>
-      <span class="friend-items">${Math.floor(Math.random()*8+1)} items</span>
-    </div>`).join('') : '<p style="color:var(--gray-400);font-size:14px;">No friends yet. Find some below!</p>';
-
-  document.getElementById('my-friends-count').textContent = myFriends.length;
+      <button class="btn-add-friend following" onclick="unfollowFriend('${f.id}',this)">Following</button>
+    </div>`).join('') :
+    `<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:40px;margin-bottom:12px;">👗</div>
+      <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">No friends yet</div>
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">Search for friends or share your invite link to get started!</div>
+      <button class="btn-primary" style="font-size:13px;padding:10px 20px;" onclick="showFTab('find-friends', document.querySelectorAll('.ftab')[1])">Find Friends</button>
+    </div>`;
+  document.getElementById('my-friends-count').textContent = friends.length;
   renderBorrowRequests();
 }
 
-function searchFriends() {
-  const q = document.getElementById('friend-search-input').value.toLowerCase();
-  const results = friends.filter(f => !f.following && (f.name.toLowerCase().includes(q) || f.handle.toLowerCase().includes(q)));
-  document.getElementById('friend-search-results').innerHTML = results.length ? results.map(f => `
-    <div class="friend-row">
-      <div class="notif-avatar" style="background:${esc(f.color)}">${esc(f.avatar)}</div>
-      <div class="friend-info"><div class="fname">${esc(f.name)}</div><div class="fhandle">${esc(f.handle)}</div></div>
-      <button class="btn-add-friend" onclick="addFriend(${f.id},this)">Follow</button>
-    </div>`).join('') : '<p style="color:var(--gray-400);font-size:14px;padding:20px 0;">No users found</p>';
+async function searchFriends() {
+  const q = document.getElementById('friend-search-input').value.trim();
+  const resultsEl = document.getElementById('friend-search-results');
+  if (!q) { resultsEl.innerHTML = ''; return; }
+  resultsEl.innerHTML = '<div style="padding:16px;color:var(--gray-400);font-size:13px;">Searching…</div>';
+  const { data } = await _supaClient
+    .from('profiles')
+    .select('id, display_name, handle, avatar_color')
+    .neq('id', currentSupaUser.id)
+    .or(`display_name.ilike.%${q}%,handle.ilike.%${q}%`)
+    .limit(20);
+  if (!data || data.length === 0) {
+    resultsEl.innerHTML = '<p style="color:var(--gray-400);font-size:14px;padding:20px 0;">No users found</p>';
+    return;
+  }
+  const followingIds = new Set(friends.map(f => f.id));
+  resultsEl.innerHTML = data.map(p => {
+    const name = p.display_name || p.handle || 'User';
+    const isFollowing = followingIds.has(p.id);
+    return `<div class="friend-row">
+      <div class="notif-avatar" style="background:${esc(p.avatar_color||'#2DD4BF')}">${esc(name[0]?.toUpperCase()||'U')}</div>
+      <div class="friend-info"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
+      <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Following':'Follow'}</button>
+    </div>`;
+  }).join('');
 }
 
-function addFriend(id, btn) {
-  const f = friends.find(x => x.id === id);
-  if (f) { f.following = true; btn.textContent = 'Following'; btn.classList.add('following'); }
-  document.getElementById('my-friends-count').textContent = friends.filter(f => f.following).length;
-  showToast('Following ' + (friends.find(x => x.id === id)?.name || '') + '!');
+async function toggleFollow(userId, name, btn) {
+  const isFollowing = btn.classList.contains('following');
+  if (isFollowing) {
+    await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
+    friends = friends.filter(f => f.id !== userId);
+    btn.textContent = 'Follow'; btn.classList.remove('following');
+    showToast('Unfollowed ' + name);
+  } else {
+    await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: userId });
+    btn.textContent = 'Following'; btn.classList.add('following');
+    showToast('Following ' + name + '!');
+    await loadFriends();
+    // reload feed with new friend's items
+    loadOtherItems();
+  }
+  document.getElementById('my-friends-count').textContent = friends.length;
+}
+
+async function unfollowFriend(userId, btn) {
+  await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
+  friends = friends.filter(f => f.id !== userId);
+  document.getElementById('my-friends-count').textContent = friends.length;
+  renderFriends();
+  showToast('Unfollowed');
 }
 
 function renderBorrowRequests() {
   const pending = borrowRequests.filter(r => r.status === 'pending');
   document.getElementById('req-badge').textContent = pending.length;
+  document.getElementById('req-badge').style.display = pending.length ? 'inline' : 'none';
   document.getElementById('borrow-requests-list').innerHTML = pending.length ? pending.map(r => `
     <div class="breq-card" id="breq-${r.id}">
       <!-- Header: who + item -->
@@ -2898,8 +2996,93 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
-function shareWardrobe() { showToast('Wardrobe link copied! \uD83D\uDD17'); }
-function shareItem() { showToast('Item link copied! \uD83D\uDD17'); }
+function shareWardrobe() { showToast('Wardrobe link copied! 🔗'); }
+function shareItem() { showToast('Item link copied! 🔗'); }
+
+function copyInviteLink() {
+  const handle = userHandle || '@user';
+  const link = `${location.origin}${location.pathname}?invite=${handle.replace('@','')}`;
+  navigator.clipboard.writeText(link).then(() => showToast('Invite link copied! 🔗')).catch(() => {
+    // fallback
+    const el = document.createElement('textarea');
+    el.value = link; document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    showToast('Invite link copied! 🔗');
+  });
+}
+
+// ==========================================
+// ONBOARDING TOOLTIPS
+// ==========================================
+const ONBOARDING_STEPS = [
+  { target: 'nav-wardrobe', title: '👗 Add your clothes', body: 'Tap here to upload items from your wardrobe. Your friends can then request to borrow them!', pos: 'top' },
+  { target: 'nav-home',     title: '🏠 Your feed',       body: "Once you've added friends, you'll see their items here. Like things you'd love to borrow!", pos: 'top' },
+  { target: 'nav-explore',  title: '🔍 Explore',          body: 'Browse and filter all items from people on FitShare.', pos: 'top' },
+  { target: 'nav-settings', title: '👤 Your profile',     title: '⚙️ Settings & profile', body: 'Customise your profile, pick a theme, and manage your account here.', pos: 'top' },
+];
+let onboardingStep = 0;
+
+function startOnboarding() {
+  if (localStorage.getItem('fs_onboarded')) return;
+  onboardingStep = 0;
+  showOnboardingStep();
+}
+
+function showOnboardingStep() {
+  dismissOnboarding();
+  if (onboardingStep >= ONBOARDING_STEPS.length) {
+    localStorage.setItem('fs_onboarded', '1');
+    return;
+  }
+  const step = ONBOARDING_STEPS[onboardingStep];
+  const targetEl = document.getElementById(step.target);
+  if (!targetEl) { onboardingStep++; showOnboardingStep(); return; }
+
+  // Highlight ring
+  const ring = document.createElement('div');
+  ring.id = 'ob-ring';
+  ring.style.cssText = `position:fixed;z-index:9998;border-radius:50%;border:3px solid #2DD4BF;pointer-events:none;transition:all 0.3s;box-shadow:0 0 0 4000px rgba(0,0,0,0.45);`;
+  const rect = targetEl.getBoundingClientRect();
+  const pad = 8;
+  ring.style.left = (rect.left - pad) + 'px';
+  ring.style.top  = (rect.top - pad) + 'px';
+  ring.style.width = (rect.width + pad*2) + 'px';
+  ring.style.height = (rect.height + pad*2) + 'px';
+  document.body.appendChild(ring);
+
+  // Tooltip
+  const tip = document.createElement('div');
+  tip.id = 'ob-tip';
+  tip.style.cssText = `position:fixed;z-index:9999;background:white;border-radius:18px;padding:18px 18px 14px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.25);`;
+  tip.innerHTML = `
+    <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">${step.title}</div>
+    <div style="font-size:13px;color:var(--gray-500);line-height:1.5;margin-bottom:14px;">${step.body}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:12px;color:var(--gray-400);">${onboardingStep+1} of ${ONBOARDING_STEPS.length}</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="skipOnboarding()" style="background:none;border:none;color:var(--gray-400);font-size:13px;cursor:pointer;padding:6px 10px;">Skip</button>
+        <button onclick="nextOnboardingStep()" style="background:var(--black);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">${onboardingStep < ONBOARDING_STEPS.length-1 ? 'Next →' : 'Done!'}</button>
+      </div>
+    </div>`;
+  // Position tooltip above or below target
+  const tipTop = rect.top > 200 ? rect.top - 160 : rect.bottom + 16;
+  tip.style.left = Math.min(Math.max(rect.left - 20, 8), window.innerWidth - 276) + 'px';
+  tip.style.top = tipTop + 'px';
+  document.body.appendChild(tip);
+}
+
+function nextOnboardingStep() {
+  onboardingStep++;
+  showOnboardingStep();
+}
+function skipOnboarding() {
+  localStorage.setItem('fs_onboarded', '1');
+  dismissOnboarding();
+}
+function dismissOnboarding() {
+  document.getElementById('ob-ring')?.remove();
+  document.getElementById('ob-tip')?.remove();
+}
 
 // ==========================================
 // BORROWED TRACKER DATA
@@ -3898,7 +4081,9 @@ async function loadOtherItems() {
 // == ENTER APP after successful auth ==
 async function enterApp() {
   await loadMyItems();
-  loadOtherItems(); // non-blocking, updates feed when ready
+  loadOtherItems();    // non-blocking
+  loadFriends();       // non-blocking
+  loadBorrowRequests(); // non-blocking
 
   // Show bottom nav now that user is authenticated
   document.getElementById('bottom-nav').style.display = 'flex';
@@ -3916,6 +4101,8 @@ async function enterApp() {
   renderCalendar();
   renderInbox();
   renderThemeGrid();
+  // Start onboarding for new users (delayed so UI is painted)
+  setTimeout(startOnboarding, 600);
 }
 
 // == LOGIN RATE LIMITER (client-side guard, server also enforces) ==
