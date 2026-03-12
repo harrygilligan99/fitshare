@@ -940,20 +940,20 @@
       </button>
     </div>
 
-    <!-- Boards tab row -->
+    <!-- Collections tab row -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;">
       <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--gray-200);">
-        <button id="wtab-all" onclick="setWardrobeTab('all')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--black);color:white;">All</button>
-        <button id="wtab-boards" onclick="setWardrobeTab('boards')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);">Boards</button>
+        <button id="wtab-collections" onclick="setWardrobeTab('collections')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--black);color:white;">Collections</button>
+        <button id="wtab-all" onclick="setWardrobeTab('all')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);">All</button>
       </div>
-      <button onclick="openCreateBoard()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray-700);">
+      <button onclick="openCreateCollection()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray-700);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        New Board
+        New Collection
       </button>
     </div>
 
     <!-- All items view -->
-    <div id="wardrobe-all-view">
+    <div id="wardrobe-all-view" style="display:none;">
       <div class="feed-grid" id="my-wardrobe-grid"></div>
       <div id="empty-wardrobe" class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
@@ -961,74 +961,112 @@
       </div>
     </div>
 
-    <!-- Boards view -->
-    <div id="wardrobe-boards-view" style="display:none;padding:12px 16px;">
-      <div id="boards-grid"></div>
+    <!-- Collections view -->
+    <div id="wardrobe-collections-view" style="display:block;padding:12px 16px;">
+      <div id="collections-grid"></div>
     </div>
   </div>
 </div>
 
-<!-- ========== BOARD DETAIL SCREEN ========== -->
-<div class="screen" id="screen-board">
+<!-- ========== COLLECTION DETAIL SCREEN ========== -->
+<div class="screen" id="screen-collection">
   <div class="topbar">
     <div class="topbar-icon" onclick="goBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
-    <div class="topbar-logo" id="board-title-bar">Board</div>
-    <div class="topbar-icon" onclick="openBoardOptions()">
+    <div class="topbar-logo" id="collection-title-bar">Collection</div>
+    <div class="topbar-icon" onclick="openCollectionOptions()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
     </div>
   </div>
   <div class="scroll-content">
     <div style="padding:16px 16px 8px;">
-      <div id="board-emoji-display" style="font-size:32px;margin-bottom:6px;">📁</div>
-      <h2 id="board-name-display" style="font-size:22px;font-weight:800;">Board</h2>
-      <p id="board-count-display" style="font-size:13px;color:var(--gray-500);margin-top:2px;"></p>
+      <div id="collection-emoji-display" style="font-size:32px;margin-bottom:6px;">📁</div>
+      <h2 id="collection-name-display" style="font-size:22px;font-weight:800;">Collection</h2>
+      <p id="collection-count-display" style="font-size:13px;color:var(--gray-500);margin-top:2px;"></p>
     </div>
-    <div class="feed-grid" id="board-items-grid"></div>
-    <div id="board-empty" class="empty-state" style="display:none;">
-      <p>No items in this board yet.<br>Go to an item and add it to this board!</p>
+    <div class="feed-grid" id="collection-items-grid"></div>
+    <div id="collection-empty" class="empty-state" style="display:none;">
+      <p>No items in this collection yet.<br>Go to an item and add it to this collection!</p>
     </div>
   </div>
 </div>
 
-<!-- ========== CREATE BOARD MODAL ========== -->
-<div class="modal-overlay" id="create-board-modal">
+<!-- ========== CREATE COLLECTION MODAL ========== -->
+<div class="modal-overlay" id="create-collection-modal">
   <div class="modal" style="padding:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-size:18px;font-weight:700;" id="create-board-title">New Board</h3>
-      <button onclick="document.getElementById('create-board-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
+      <h3 style="font-size:18px;font-weight:700;" id="create-collection-title">New Collection</h3>
+      <button onclick="document.getElementById('create-collection-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
     </div>
     <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">Emoji</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="board-emoji-picker">
-      <span onclick="selectBoardEmoji(this)" data-emoji="👗" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👗</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="☀️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">☀️</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🌙" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🌙</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="👟" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👟</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🎉" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🎉</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🌸" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🌸</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🍂" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🍂</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="❄️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">❄️</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="💼" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">💼</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🏖️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🏖️</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="🏋️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🏋️</span>
-      <span onclick="selectBoardEmoji(this)" data-emoji="📁" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;border-color:var(--black);">📁</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="collection-emoji-picker">
+      <span onclick="selectCollectionEmoji(this)" data-emoji="👗" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👗</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="☀️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">☀️</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🌙" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🌙</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="👟" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👟</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🎉" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🎉</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🌸" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🌸</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🍂" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🍂</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="❄️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">❄️</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="💼" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">💼</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🏖️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🏖️</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="🏋️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🏋️</span>
+      <span onclick="selectCollectionEmoji(this)" data-emoji="📁" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;border-color:var(--black);">📁</span>
     </div>
-    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Board name</div>
-    <input type="text" id="board-name-input" placeholder="e.g. Summer, Going Out, Work..." class="field-input" maxlength="30">
-    <button onclick="saveBoard()" class="btn-primary" style="margin-top:14px;" id="save-board-btn">Create Board</button>
+    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Collection name</div>
+    <input type="text" id="collection-name-input" placeholder="e.g. Summer, Going Out, Work..." class="field-input" maxlength="30">
+    <button onclick="saveCollection()" class="btn-primary" style="margin-top:14px;" id="save-collection-btn">Create Collection</button>
   </div>
 </div>
 
-<!-- ========== ADD TO BOARD MODAL ========== -->
-<div class="modal-overlay" id="add-to-board-modal">
+<!-- ========== ADD TO COLLECTION MODAL ========== -->
+<div class="modal-overlay" id="add-to-collection-modal">
   <div class="modal" style="padding:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-size:17px;font-weight:700;">Add to Board</h3>
-      <button onclick="document.getElementById('add-to-board-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
+      <h3 style="font-size:17px;font-weight:700;">Add to Collection</h3>
+      <button onclick="document.getElementById('add-to-collection-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
     </div>
-    <div id="add-to-board-list" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
-    <button onclick="openCreateBoard()" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;border:1.5px dashed var(--gray-300);background:none;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;">+ Create new board</button>
+    <div id="add-to-collection-list" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+    <button onclick="openCreateCollection()" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;border:1.5px dashed var(--gray-300);background:none;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;">+ Create new collection</button>
+  </div>
+</div>
+
+
+<!-- ========== MANAGE GROUPS MODAL (Plus) ========== -->
+<div class="modal-overlay" id="manage-groups-modal">
+  <div class="modal-sheet" style="max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:18px;font-weight:700;">My Groups</h3>
+      <button onclick="document.getElementById('manage-groups-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
+    </div>
+    <div id="manage-groups-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+    <button onclick="openCreateGroupModal()" style="width:100%;padding:12px;border-radius:12px;border:1.5px dashed var(--gray-300);background:none;font-size:13px;font-weight:600;color:var(--teal-dark);cursor:pointer;">＋ New Group</button>
+  </div>
+</div>
+
+<!-- ========== CREATE / EDIT GROUP MODAL ========== -->
+<div class="modal-overlay" id="create-group-modal">
+  <div class="modal-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:18px;font-weight:700;" id="cg-title">New Group</h3>
+      <button onclick="document.getElementById('create-group-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;" id="cg-emoji-picker">
+      <span onclick="selectGroupEmoji(this,'🫂')" data-emoji="🫂" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid var(--black);">🫂</span>
+      <span onclick="selectGroupEmoji(this,'👯')" data-emoji="👯" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👯</span>
+      <span onclick="selectGroupEmoji(this,'🏠')" data-emoji="🏠" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🏠</span>
+      <span onclick="selectGroupEmoji(this,'🎓')" data-emoji="🎓" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🎓</span>
+      <span onclick="selectGroupEmoji(this,'💼')" data-emoji="💼" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">💼</span>
+      <span onclick="selectGroupEmoji(this,'🎉')" data-emoji="🎉" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">🎉</span>
+      <span onclick="selectGroupEmoji(this,'⭐')" data-emoji="⭐" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">⭐</span>
+      <span onclick="selectGroupEmoji(this,'💕')" data-emoji="💕" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">💕</span>
+    </div>
+    <div class="field-label" style="margin-top:0;">Group name</div>
+    <input type="text" id="cg-name" placeholder="e.g. Best friends, Uni girls..." class="field-input" maxlength="30">
+    <div class="field-label">Add friends to this group</div>
+    <div id="cg-members-list" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:4px;"></div>
+    <button onclick="saveGroup()" class="btn-primary" style="margin-top:14px;" id="cg-save-btn">Create Group</button>
   </div>
 </div>
 
@@ -1085,6 +1123,14 @@
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
+    <div class="settings-row" id="settings-groups-row" style="display:none;" onclick="openManageGroups()">
+      <div class="settings-row-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path><circle cx="19" cy="7" r="3"></circle></svg>
+        <span>Visibility Groups <span style="font-size:10px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle;">✦ Plus</span></span>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
+
     <div class="settings-row" onclick="showScreen(&#39;borrowed&#39;)">
       <div class="settings-row-left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
@@ -1713,17 +1759,29 @@
     <div class="field-row" style="margin-top:14px;">
       <div>
         <div class="field-label" style="margin-top:0">Category</div>
-        <select class="field-select" id="item-category">
-          <option>Top</option><option>Bottom</option><option>Dress</option>
-          <option>Outerwear</option><option>Shoes</option><option>Accessory</option>
+        <select class="field-select" id="item-category" onchange="updateSizeOptions()">
+          <option>Top</option>
+          <option>Bottom</option>
+          <option>Jeans</option>
+          <option>Dress</option>
+          <option>Skirt</option>
+          <option>Outerwear</option>
+          <option>Shoes</option>
+          <option>Trainers</option>
+          <option>Boots</option>
+          <option>Accessory</option>
+          <option>Bag</option>
+          <option>Swimwear</option>
+          <option>Sportswear</option>
+          <option>Suit</option>
+          <option>Other</option>
         </select>
       </div>
       <div>
         <div class="field-label" style="margin-top:0">Size</div>
         <select class="field-select" id="item-size">
-          <option>XS</option><option>S</option><option selected="">M</option>
+          <option>XS</option><option>S</option><option selected>M</option>
           <option>L</option><option>XL</option><option>XXL</option>
-          <option>6</option><option>8</option><option>10</option><option>12</option><option>14</option>
         </select>
       </div>
     </div>
@@ -1732,24 +1790,29 @@
 
     <div class="field-label" style="display:flex;align-items:center;gap:6px;">
       Visibility
-      <span id="visibility-pro-badge" style="display:none;font-size:10px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 6px;border-radius:10px;font-weight:700;">PRO</span>
     </div>
     <div style="display:flex;gap:8px;" id="visibility-options">
-      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-all-lbl">
-        <input type="radio" name="item-visibility" value="all" checked style="display:none;" id="vis-all">
-        <div style="font-size:18px;">🌍</div>
-        <div style="font-size:11px;font-weight:600;margin-top:2px;">Everyone</div>
-      </label>
-      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-friends-lbl" onclick="checkVisibilityPro()">
-        <input type="radio" name="item-visibility" value="friends" style="display:none;" id="vis-friends">
+      <label style="flex:1;border:1.5px solid var(--black);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-friends-lbl" onclick="onVisClick('friends')">
+        <input type="radio" name="item-visibility" value="friends" checked style="display:none;" id="vis-friends">
         <div style="font-size:18px;">👥</div>
-        <div style="font-size:11px;font-weight:600;margin-top:2px;">Friends only</div>
+        <div style="font-size:11px;font-weight:600;margin-top:2px;">Friends</div>
       </label>
-      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-private-lbl" onclick="checkVisibilityPro()">
+      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-group-lbl" onclick="onVisClick('group')">
+        <input type="radio" name="item-visibility" value="group" style="display:none;" id="vis-group">
+        <div style="font-size:18px;">🫂</div>
+        <div style="font-size:10px;font-weight:600;margin-top:2px;">Group <span style="font-size:9px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 4px;border-radius:6px;vertical-align:middle;">✦</span></div>
+      </label>
+      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-private-lbl" onclick="onVisClick('private')">
         <input type="radio" name="item-visibility" value="private" style="display:none;" id="vis-private">
         <div style="font-size:18px;">🔒</div>
         <div style="font-size:11px;font-weight:600;margin-top:2px;">Private</div>
       </label>
+    </div>
+    <!-- Group picker for Plus members -->
+    <div id="vis-group-picker" style="display:none;margin-top:10px;">
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;">Visible to which group?</div>
+      <div id="vis-group-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+      <button onclick="openManageGroups()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1.5px dashed var(--gray-300);background:none;font-size:12px;font-weight:600;color:var(--teal-dark);cursor:pointer;">＋ Create new group</button>
     </div>
 
     <button class="btn-primary" onclick="addItem()">Add Item</button>
@@ -1958,6 +2021,7 @@ let currentSizeFilter = 'All';
 // Real data only — no fake users
 let friends = [];     // loaded from Supabase (people this user follows)
 
+
 const sampleItems = []; // real data only
 
 let myItems = [];
@@ -2073,7 +2137,8 @@ function renderFeed() {
   // Enforce visibility: filter out items marked friends-only if not a friend, private = never show
   const filteredPool = friendPool.filter(item => {
     if (item.visibility === 'private') return false;
-    if (item.visibility === 'friends' && !friendIds.has(item.user_id)) return false;
+    if ((item.visibility === 'friends' || item.visibility === 'all') && !friendIds.has(item.user_id)) return false;
+
     return true;
   });
   const allItems = [...filteredPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
@@ -2192,40 +2257,92 @@ function filterExplore(q) {
   }, 200); // debounce
 }
 
+function scoreItem(item, words) {
+  // Score how well an item matches the search — higher = better match
+  let score = 0;
+  const title = (item.title || '').toLowerCase();
+  const cat = (item.category || '').toLowerCase();
+  const size = (item.size || '').toLowerCase();
+  const desc = (item.desc || '').toLowerCase();
+  const owner = (item.owner || item.display_name || '').toLowerCase();
+  const handle = (item.handle || '').toLowerCase();
+
+  for (const word of words) {
+    if (!word) continue;
+    // Title matches score highest
+    if (title === word) score += 100;
+    else if (title.startsWith(word)) score += 60;
+    else if (title.includes(word)) score += 40;
+    // Category/size exact match
+    if (cat === word || cat.includes(word)) score += 30;
+    if (size === word) score += 25;
+    // Owner name/handle match
+    if (owner.includes(word) || handle.includes(word)) score += 20;
+    // Description match (lower weight)
+    if (desc.includes(word)) score += 10;
+  }
+  return score;
+}
+
 function renderExplore() {
   const q = exploreSearchQuery.toLowerCase().trim();
+  const words = q ? q.split(/\s+/).filter(Boolean) : [];
   const friendsOnly = document.getElementById('friends-only-toggle')?.classList.contains('on');
   const sort = document.getElementById('explore-sort')?.value || 'newest';
   const friendIds = new Set(friends.map(f => f.id));
 
   const pool = otherItems.length > 0 ? otherItems : sampleItems;
-  let allItems = [...pool, ...myItems.map(i => ({...i, owner:userName||'me',ownerAvatar:(userName||'h')[0].toLowerCase(),ownerColor:'#2DD4BF'}))];
+  let allItems = [...pool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar:(userName||'h')[0].toLowerCase(), ownerColor:'#2DD4BF'}))];
+
+  // Filter: friends-only items only visible to friends
+  allItems = allItems.filter(item => {
+    if (item.visibility === 'private' && item.user_id !== currentSupaUser?.id) return false;
+    if ((item.visibility === 'friends' || item.visibility === 'all') && item.user_id !== currentSupaUser?.id && !friendIds.has(item.user_id)) return false;
+    if (item.visibility === 'group') {
+      if (item.user_id === currentSupaUser?.id) return true; // owner always sees
+      const grp = visGroups.find(g => g.id === item.group_id);
+      if (!grp || !grp.memberIds.includes(currentSupaUser?.id)) return false;
+    }
+    return true;
+  });
 
   let filtered = allItems.filter(item => {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
     const condOk = currentCondFilter === 'All' || (item.condition || '') === currentCondFilter;
-    const friendsOk = !friendsOnly || friendIds.has(item.user_id);
+    const friendsOk = !friendsOnly || friendIds.has(item.user_id) || item.user_id === currentSupaUser?.id;
     if (!catOk || !sizeOk || !condOk || !friendsOk) return false;
-    if (!q) return true;
-    // Rich text match: title, category, size, description, owner name
-    const haystack = [item.title, item.category, item.size, item.desc||'', item.owner||''].join(' ').toLowerCase();
-    // Support multi-word: all words must match
-    return q.split(/\s+/).every(word => haystack.includes(word));
+    if (!words.length) return true;
+    // All words must appear somewhere across all fields
+    const haystack = [item.title, item.category, item.size, item.desc||'', item.owner||'', item.handle||''].join(' ').toLowerCase();
+    return words.every(word => haystack.includes(word));
   });
 
-  // Sort
-  if (sort === 'az') filtered.sort((a,b) => a.title.localeCompare(b.title));
-  else if (sort === 'za') filtered.sort((a,b) => b.title.localeCompare(a.title));
-  // newest: natural order (most recently added last is default; Supabase returns newest first via loadOtherItems)
+  // Sort: if searching, sort by relevance score; otherwise by chosen sort
+  if (words.length && sort === 'newest') {
+    filtered.sort((a, b) => scoreItem(b, words) - scoreItem(a, words));
+  } else if (sort === 'az') {
+    filtered.sort((a,b) => a.title.localeCompare(b.title));
+  } else if (sort === 'za') {
+    filtered.sort((a,b) => b.title.localeCompare(a.title));
+  }
 
   // Update count
   const countEl = document.getElementById('explore-result-count');
   if (countEl) countEl.textContent = filtered.length > 0 ? `${filtered.length} item${filtered.length!==1?'s':''}` : '';
 
+  // Smart empty state
+  let emptyMsg = 'No items yet';
+  if (q) {
+    const friendItems = allItems.filter(i => friendIds.has(i.user_id));
+    emptyMsg = friendItems.length === 0
+      ? 'Add some friends to see their wardrobes!'
+      : `No items match "${esc(q)}" — try different words`;
+  }
+
   document.getElementById('explore-grid').innerHTML = filtered.length
     ? filtered.map(item => cardHTML(item, item.user_id === currentSupaUser?.id || (!item.isOther && myItems.some(i => i.id === item.id)))).join('')
-    : `<div class="empty-state" style="grid-column:1/-1"><p>${q ? 'No items match "'+esc(q)+'"' : 'No items yet'}</p></div>`;
+    : `<div class="empty-state" style="grid-column:1/-1"><p>${emptyMsg}</p></div>`;
 }
 
 function setCatFilter(cat, el) {
@@ -2352,10 +2469,14 @@ function openAddModal() {
   document.getElementById('photo-upload-btn').innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
     <span>ADD PHOTO</span>`;
-  // Reset visibility to all
-  document.getElementById('vis-all').checked = true;
+  // Reset visibility to friends
+  document.getElementById('vis-friends').checked = true;
   document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
-  document.getElementById('vis-all-lbl').style.borderColor = 'var(--black)';
+  document.getElementById('vis-friends-lbl').style.borderColor = 'var(--black)';
+  _selectedVisGroupId = null;
+  const gp = document.getElementById('vis-group-picker');
+  if (gp) gp.style.display = 'none';
+
   // Style radio changes
   document.querySelectorAll('#visibility-options label').forEach(lbl => {
     lbl.addEventListener('click', () => {
@@ -2363,21 +2484,222 @@ function openAddModal() {
       lbl.style.borderColor = 'var(--black)';
     });
   });
+  updateSizeOptions();
   document.getElementById('add-modal').classList.add('open');
 }
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-function checkVisibilityPro() {
-  if (!isPro) {
-    setTimeout(() => {
-      document.getElementById('vis-all').checked = true;
-      document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
-      document.getElementById('vis-all-lbl').style.borderColor = 'var(--black)';
-      showToast('Visibility control is a Pro feature ✦');
-    }, 50);
+// ==========================================
+// SMART SIZE OPTIONS BY CATEGORY
+// ==========================================
+const CATEGORY_SIZES = {
+  'Top':        ['XS','S','M','L','XL','XXL'],
+  'Bottom':     ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Jeans':      ['W24','W25','W26','W27','W28','W29','W30','W31','W32','W33','W34','W36','W38'],
+  'Dress':      ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Skirt':      ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Outerwear':  ['XS','S','M','L','XL','XXL'],
+  'Shoes':      ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11','UK12'],
+  'Trainers':   ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11','UK12'],
+  'Boots':      ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11'],
+  'Accessory':  ['One size','S','M','L'],
+  'Bag':        ['One size'],
+  'Swimwear':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Sportswear': ['XS','S','M','L','XL','XXL'],
+  'Suit':       ['XS','S','M','L','XL','XXL','36','38','40','42','44'],
+  'Other':      ['XS','S','M','L','XL','XXL','One size'],
+};
+const DEFAULT_SIZE = {
+  'Top':'M','Bottom':'M','Jeans':'W28','Dress':'M','Skirt':'M','Outerwear':'M',
+  'Shoes':'UK6','Trainers':'UK6','Boots':'UK6','Accessory':'One size','Bag':'One size',
+  'Swimwear':'M','Sportswear':'M','Suit':'M','Other':'M'
+};
+
+function updateSizeOptions(keepVal) {
+  const cat = document.getElementById('item-category')?.value || 'Top';
+  const sizes = CATEGORY_SIZES[cat] || CATEGORY_SIZES['Top'];
+  const sel = document.getElementById('item-size');
+  if (!sel) return;
+  const current = keepVal || sel.value;
+  sel.innerHTML = sizes.map(s => `<option${s===current?' selected':''}>${s}</option>`).join('');
+  // If current size not in new list, default
+  if (!sizes.includes(current)) {
+    const def = DEFAULT_SIZE[cat] || sizes[Math.floor(sizes.length/2)];
+    sel.value = def;
   }
 }
 
+// ==========================================
+// VISIBILITY GROUPS (Plus feature)
+// ==========================================
+let visGroups = JSON.parse(localStorage.getItem('fs_vis_groups') || '[]');
+// visGroups: [{id, name, emoji, memberIds: [userId, ...]}]
+let _editingGroupId = null;
+let _selectedGroupEmoji = '🫂';
+let _selectedVisGroupId = null;
+
+function saveVisGroups() {
+  localStorage.setItem('fs_vis_groups', JSON.stringify(visGroups));
+}
+
+function onVisClick(val) {
+  setTimeout(() => {
+    document.getElementById('vis-' + val).checked = true;
+    document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
+    document.getElementById('vis-' + val + '-lbl').style.borderColor = 'var(--black)';
+    const picker = document.getElementById('vis-group-picker');
+    if (picker) picker.style.display = val === 'group' ? '' : 'none';
+    if (val === 'group') {
+      if (!isPro) {
+        // Revert to friends, show upsell
+        setTimeout(() => {
+          document.getElementById('vis-friends').checked = true;
+          document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
+          document.getElementById('vis-friends-lbl').style.borderColor = 'var(--black)';
+          picker.style.display = 'none';
+          showToast('Custom groups are a fitshare ✦ Plus feature');
+        }, 50);
+        return;
+      }
+      renderVisGroupPicker();
+    }
+  }, 10);
+}
+
+function renderVisGroupPicker() {
+  const el = document.getElementById('vis-group-list');
+  if (!el) return;
+  if (visGroups.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray-400);padding:6px 0;">No groups yet — create one below.</div>';
+    return;
+  }
+  el.innerHTML = visGroups.map(g => {
+    const names = g.memberIds.slice(0,3).map(id => {
+      const f = friends.find(f => f.id === id);
+      return f ? (f.display_name || f.handle || '') : '';
+    }).filter(Boolean).join(', ');
+    const selected = _selectedVisGroupId === g.id;
+    return `<div onclick="selectVisGroup('${g.id}',this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px solid ${selected?'var(--black)':'var(--gray-200)'};cursor:pointer;transition:border-color 0.15s;">
+      <span style="font-size:20px;">${g.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;">${esc(g.name)}</div>
+        <div style="font-size:11px;color:var(--gray-500);">${g.memberIds.length} member${g.memberIds.length!==1?'s':''} ${names?'· '+esc(names):''}</div>
+      </div>
+      ${selected ? '<div style="color:var(--teal-dark);font-weight:700;">✓</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectVisGroup(id, el) {
+  _selectedVisGroupId = id;
+  renderVisGroupPicker();
+}
+
+function openManageGroups() {
+  document.getElementById('vis-group-picker') && (document.getElementById('vis-group-picker').style.display = 'none');
+  renderManageGroupsList();
+  document.getElementById('manage-groups-modal').classList.add('open');
+}
+
+function renderManageGroupsList() {
+  const el = document.getElementById('manage-groups-list');
+  if (!el) return;
+  if (visGroups.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:12px 0;">No groups yet</div>';
+    return;
+  }
+  el.innerHTML = visGroups.map(g => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--gray-50);border:1px solid var(--gray-100);">
+      <span style="font-size:24px;">${g.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;">${esc(g.name)}</div>
+        <div style="font-size:12px;color:var(--gray-500);">${g.memberIds.length} member${g.memberIds.length!==1?'s':''}</div>
+      </div>
+      <button onclick="openEditGroup('${g.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--teal-dark);font-weight:600;padding:4px 8px;">Edit</button>
+      <button onclick="deleteGroup('${g.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:#f87171;font-weight:600;padding:4px 8px;">Delete</button>
+    </div>`).join('');
+}
+
+function openCreateGroupModal() {
+  _editingGroupId = null;
+  _selectedGroupEmoji = '🫂';
+  document.getElementById('cg-title').textContent = 'New Group';
+  document.getElementById('cg-save-btn').textContent = 'Create Group';
+  document.getElementById('cg-name').value = '';
+  document.querySelectorAll('#cg-emoji-picker span').forEach(s => s.style.borderColor = s.dataset.emoji === '🫂' ? 'var(--black)' : 'transparent');
+  renderGroupMembersList([]);
+  document.getElementById('manage-groups-modal').classList.remove('open');
+  document.getElementById('create-group-modal').classList.add('open');
+}
+
+function openEditGroup(id) {
+  const g = visGroups.find(g => g.id === id);
+  if (!g) return;
+  _editingGroupId = id;
+  _selectedGroupEmoji = g.emoji;
+  document.getElementById('cg-title').textContent = 'Edit Group';
+  document.getElementById('cg-save-btn').textContent = 'Save Changes';
+  document.getElementById('cg-name').value = g.name;
+  document.querySelectorAll('#cg-emoji-picker span').forEach(s => s.style.borderColor = s.dataset.emoji === g.emoji ? 'var(--black)' : 'transparent');
+  renderGroupMembersList(g.memberIds);
+  document.getElementById('manage-groups-modal').classList.remove('open');
+  document.getElementById('create-group-modal').classList.add('open');
+}
+
+function renderGroupMembersList(selectedIds) {
+  const el = document.getElementById('cg-members-list');
+  if (!el) return;
+  if (friends.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray-400);">Add friends first to include them.</div>';
+    return;
+  }
+  el.innerHTML = friends.map(f => {
+    const name = f.display_name || f.handle || 'User';
+    const checked = selectedIds.includes(f.id);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--gray-100);">
+      <input type="checkbox" name="cg-member" value="${f.id}" ${checked?'checked':''} style="width:16px;height:16px;accent-color:var(--teal-dark);">
+      <div style="width:32px;height:32px;border-radius:50%;background:${f.avatar_color||'#6366f1'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${name[0].toUpperCase()}</div>
+      <div style="font-size:13px;font-weight:600;">${esc(name)}</div>
+    </label>`;
+  }).join('');
+}
+
+function selectGroupEmoji(el, emoji) {
+  document.querySelectorAll('#cg-emoji-picker span').forEach(s => s.style.borderColor = 'transparent');
+  el.style.borderColor = 'var(--black)';
+  _selectedGroupEmoji = emoji;
+}
+
+function saveGroup() {
+  const name = document.getElementById('cg-name').value.trim();
+  if (!name) { showToast('Give your group a name!'); return; }
+  const memberIds = [...document.querySelectorAll('input[name="cg-member"]:checked')].map(c => c.value);
+  if (_editingGroupId) {
+    const g = visGroups.find(g => g.id === _editingGroupId);
+    if (g) { g.name = name; g.emoji = _selectedGroupEmoji; g.memberIds = memberIds; }
+  } else {
+    visGroups.push({ id: 'vg_' + Date.now(), name, emoji: _selectedGroupEmoji, memberIds });
+  }
+  saveVisGroups();
+  document.getElementById('create-group-modal').classList.remove('open');
+  showToast(_editingGroupId ? 'Group updated!' : 'Group created!');
+  _editingGroupId = null;
+  // Re-open manage modal and refresh vis picker if open
+  renderManageGroupsList();
+  document.getElementById('manage-groups-modal').classList.add('open');
+  renderVisGroupPicker();
+}
+
+function deleteGroup(id) {
+  if (!confirm('Delete this group?')) return;
+  visGroups = visGroups.filter(g => g.id !== id);
+  saveVisGroups();
+  renderManageGroupsList();
+  showToast('Group deleted');
+  if (_selectedVisGroupId === id) _selectedVisGroupId = null;
+}
+
+// ==========================================
 function triggerPhotoUpload() { document.getElementById('photo-input').click(); }
 
 function handlePhotoUpload(input) {
@@ -2440,7 +2762,10 @@ async function addItem() {
   const title = document.getElementById('item-title').value.trim();
   if (!title) { showToast('Please add a title'); return; }
   const visEl = document.querySelector('input[name="item-visibility"]:checked');
-  const visibility = visEl ? visEl.value : 'all';
+  const visibility = visEl ? visEl.value : 'friends';
+  const group_id = visibility === 'group' ? _selectedVisGroupId : null;
+  if (visibility === 'group' && !group_id) { showToast('Please select a group first'); return; }
+
   const newItem = {
     localId: 'local_' + Date.now(),
     title,
@@ -2450,6 +2775,7 @@ async function addItem() {
     imageData: uploadedPhotoData,
     emoji: '\uD83D\uDC55',
     visibility,
+    group_id,
     likes: 0, liked: false, requested: false,
     affiliate: window._pendingAffiliate || null,
   };
@@ -2483,7 +2809,7 @@ function renderWardrobe() {
             <div class="feed-card-title">${item.title}</div>
             <div class="feed-card-size">Size ${item.size} \u00B7 ${item.category}</div>
             <div class="feed-card-actions">
-              <button onclick="event.stopPropagation();openAddToBoard('${item.localId}')" style="background:none;border:none;cursor:pointer;color:var(--teal-dark);font-size:11px;font-weight:600;padding:0;">\uD83D\uDCC1 Board</button>
+              <button onclick="event.stopPropagation();openAddToCollection('${item.localId}')" style="background:none;border:none;cursor:pointer;color:var(--teal-dark);font-size:11px;font-weight:600;padding:0;">\uD83D\uDCC1 Collection</button>
               <button onclick="event.stopPropagation();deleteItem('${item.localId}')" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:11px;">Remove</button>
             </div>
           </div>
@@ -2495,38 +2821,38 @@ function renderWardrobe() {
 }
 
 // ==========================================
-// WARDROBE BOARDS (Pinterest-style)
+// WARDROBE COLLECTIONS (Pinterest-style)
 // ==========================================
-let boards = JSON.parse(localStorage.getItem('fs_boards') || '[]');
-let currentBoardId = null;
-let selectedBoardEmoji = '\uD83D\uDCC1';
-let editingBoardId = null;
+let collections = JSON.parse(localStorage.getItem('fs_collections') || '[]');
+let currentCollectionId = null;
+let selectedCollectionEmoji = '\uD83D\uDCC1';
+let editingCollectionId = null;
 
 function setWardrobeTab(tab) {
   document.getElementById('wtab-all').style.background = tab==='all' ? 'var(--black)' : 'white';
   document.getElementById('wtab-all').style.color = tab==='all' ? 'white' : 'var(--gray-500)';
-  document.getElementById('wtab-boards').style.background = tab==='boards' ? 'var(--black)' : 'white';
-  document.getElementById('wtab-boards').style.color = tab==='boards' ? 'white' : 'var(--gray-500)';
+  document.getElementById('wtab-collections').style.background = tab==='collections' ? 'var(--black)' : 'white';
+  document.getElementById('wtab-collections').style.color = tab==='collections' ? 'white' : 'var(--gray-500)';
   document.getElementById('wardrobe-all-view').style.display = tab==='all' ? '' : 'none';
-  document.getElementById('wardrobe-boards-view').style.display = tab==='boards' ? '' : 'none';
-  if (tab === 'boards') renderBoards();
+  document.getElementById('wardrobe-collections-view').style.display = tab==='collections' ? '' : 'none';
+  if (tab === 'collections') renderCollections();
 }
 
-function renderBoards() {
-  const el = document.getElementById('boards-grid');
-  if (boards.length === 0) {
-    el.innerHTML = '<div class="empty-state" style="padding:40px 0;"><p>No boards yet.<br>Tap "New Board" to create one!</p></div>';
+function renderCollections() {
+  const el = document.getElementById('collections-grid');
+  if (collections.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:40px 0;"><p>No collections yet.<br>Tap "New Collection" to create one!</p></div>';
     return;
   }
   el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-    boards.map(b => {
+    collections.map(b => {
       const items = myItems.filter(i => (i.boards||[]).includes(b.id));
       const thumbs = items.slice(0,4).map(i => i.imageData
         ? `<img src="${i.imageData}" style="width:100%;height:100%;object-fit:cover;">`
         : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--gray-100);">${i.emoji||'\uD83D\uDC57'}</div>`
       );
       const grid4 = [0,1,2,3].map(idx => `<div style="flex:1;min-width:0;aspect-ratio:1;overflow:hidden;">${thumbs[idx]||'<div style="width:100%;height:100%;background:var(--gray-100);"></div>'}</div>`).join('');
-      return `<div onclick="openBoard('${b.id}')" style="border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      return `<div onclick="openCollection('${b.id}')" style="border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
         <div style="display:flex;flex-wrap:wrap;">${grid4}</div>
         <div style="padding:10px 12px;background:white;">
           <div style="font-size:14px;">${b.emoji} <strong>${esc(b.name)}</strong></div>
@@ -2536,16 +2862,16 @@ function renderBoards() {
     }).join('') + '</div>';
 }
 
-function openBoard(boardId) {
-  const b = boards.find(b => b.id === boardId);
+function openCollection(boardId) {
+  const b = collections.find(b => b.id === boardId);
   if (!b) return;
-  currentBoardId = boardId;
-  document.getElementById('board-title-bar').textContent = b.name;
-  document.getElementById('board-emoji-display').textContent = b.emoji;
-  document.getElementById('board-name-display').textContent = b.name;
+  currentCollectionId = boardId;
+  document.getElementById('collection-title-bar').textContent = b.name;
+  document.getElementById('collection-emoji-display').textContent = b.emoji;
+  document.getElementById('collection-name-display').textContent = b.name;
   const items = myItems.filter(i => (i.boards||[]).includes(boardId));
-  document.getElementById('board-count-display').textContent = items.length + ' item' + (items.length!==1?'s':'');
-  document.getElementById('board-items-grid').innerHTML = items.length
+  document.getElementById('collection-count-display').textContent = items.length + ' item' + (items.length!==1?'s':'');
+  document.getElementById('collection-items-grid').innerHTML = items.length
     ? items.map(item => {
         const thumb = item.imageData ? `<img src="${item.imageData}" alt="${item.title}">` : `<div class="placeholder-icon">${item.emoji||'\uD83D\uDC57'}</div>`;
         return `<div class="feed-card" onclick="openItemDetail('${item.localId}')">
@@ -2557,77 +2883,77 @@ function openBoard(boardId) {
         </div>`;
       }).join('')
     : '';
-  document.getElementById('board-empty').style.display = items.length ? 'none' : 'block';
-  showScreen('board');
+  document.getElementById('collection-empty').style.display = items.length ? 'none' : 'block';
+  showScreen('collection');
 }
 
-function openBoardOptions() {
-  const b = boards.find(b => b.id === currentBoardId);
+function openCollectionOptions() {
+  const b = collections.find(b => b.id === currentCollectionId);
   if (!b) return;
-  if (confirm('Delete board "' + b.name + '"? Items won\'t be deleted.')) {
-    boards = boards.filter(b => b.id !== currentBoardId);
-    saveBoards();
+  if (confirm('Delete collection "' + b.name + '"? Items won\'t be deleted.')) {
+    collections = collections.filter(c => c.id !== currentCollectionId);
+    saveCollections();
     goBack();
-    showToast('Board deleted');
+    showToast('Collection deleted');
   }
 }
 
-function openCreateBoard() {
-  document.getElementById('add-to-board-modal').classList.remove('open');
-  editingBoardId = null;
-  selectedBoardEmoji = '\uD83D\uDCC1';
-  document.getElementById('board-name-input').value = '';
-  document.getElementById('create-board-title').textContent = 'New Board';
-  document.getElementById('save-board-btn').textContent = 'Create Board';
-  document.querySelectorAll('#board-emoji-picker span').forEach(s => s.style.borderColor = s.dataset.emoji === '\uD83D\uDCC1' ? 'var(--black)' : 'transparent');
-  document.getElementById('create-board-modal').classList.add('open');
+function openCreateCollection() {
+  document.getElementById('add-to-collection-modal').classList.remove('open');
+  editingCollectionId = null;
+  selectedCollectionEmoji = '\uD83D\uDCC1';
+  document.getElementById('collection-name-input').value = '';
+  document.getElementById('create-collection-title').textContent = 'New Collection';
+  document.getElementById('save-collection-btn').textContent = 'Create Collection';
+  document.querySelectorAll('#collection-emoji-picker span').forEach(s => s.style.borderColor = s.dataset.emoji === '\uD83D\uDCC1' ? 'var(--black)' : 'transparent');
+  document.getElementById('create-collection-modal').classList.add('open');
 }
 
-function selectBoardEmoji(el) {
-  selectedBoardEmoji = el.dataset.emoji;
-  document.querySelectorAll('#board-emoji-picker span').forEach(s => s.style.borderColor = 'transparent');
+function selectCollectionEmoji(el) {
+  selectedCollectionEmoji = el.dataset.emoji;
+  document.querySelectorAll('#collection-emoji-picker span').forEach(s => s.style.borderColor = 'transparent');
   el.style.borderColor = 'var(--black)';
 }
 
-function saveBoard() {
-  const name = document.getElementById('board-name-input').value.trim();
-  if (!name) { showToast('Please enter a board name'); return; }
-  if (editingBoardId) {
-    const b = boards.find(b => b.id === editingBoardId);
-    if (b) { b.name = name; b.emoji = selectedBoardEmoji; }
+function saveCollection() {
+  const name = document.getElementById('collection-name-input').value.trim();
+  if (!name) { showToast('Please enter a collection name'); return; }
+  if (editingCollectionId) {
+    const b = collections.find(b => b.id === editingCollectionId);
+    if (b) { b.name = name; b.emoji = selectedCollectionEmoji; }
   } else {
-    boards.push({ id: 'b_' + Date.now(), name, emoji: selectedBoardEmoji });
+    collections.push({ id: 'b_' + Date.now(), name, emoji: selectedCollectionEmoji });
   }
-  saveBoards();
-  document.getElementById('create-board-modal').classList.remove('open');
-  showToast(editingBoardId ? 'Board updated!' : 'Board "' + name + '" created!');
-  renderBoards();
+  saveCollections();
+  document.getElementById('create-collection-modal').classList.remove('open');
+  showToast(editingCollectionId ? 'Collection updated!' : 'Collection "' + name + '" created!');
+  renderCollections();
 }
 
-function saveBoards() {
-  localStorage.setItem('fs_boards', JSON.stringify(boards));
+function saveCollections() {
+  localStorage.setItem('fs_collections', JSON.stringify(collections));
 }
 
-function openAddToBoard(itemId) {
+function openAddToCollection(itemId) {
   const item = myItems.find(i => i.localId === itemId);
   if (!item) return;
-  const list = document.getElementById('add-to-board-list');
-  document.getElementById('add-to-board-modal').dataset.itemId = itemId;
-  if (boards.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px;">No boards yet</div>';
+  const list = document.getElementById('add-to-collection-list');
+  document.getElementById('add-to-collection-modal').dataset.itemId = itemId;
+  if (collections.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px;">No collections yet</div>';
   } else {
-    list.innerHTML = boards.map(b => {
-      const inBoard = (item.boards||[]).includes(b.id);
-      return `<div onclick="toggleItemBoard('${itemId}','${b.id}',this)" style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:12px;border:1.5px solid ${inBoard?'var(--black)':'var(--gray-200)'};cursor:pointer;background:${inBoard?'var(--gray-50)':'white'};">
+    list.innerHTML = collections.map(b => {
+      const inCollection = (item.boards||[]).includes(b.id);
+      return `<div onclick="toggleItemCollection('${itemId}','${b.id}',this)" style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:12px;border:1.5px solid ${inCollection?'var(--black)':'var(--gray-200)'};cursor:pointer;background:${inCollection?'var(--gray-50)':'white'};">
         <span>${b.emoji} ${esc(b.name)}</span>
-        <span style="font-size:18px;">${inBoard?'\u2713':''}</span>
+        <span style="font-size:18px;">${inCollection?'\u2713':''}</span>
       </div>`;
     }).join('');
   }
-  document.getElementById('add-to-board-modal').classList.add('open');
+  document.getElementById('add-to-collection-modal').classList.add('open');
 }
 
-function toggleItemBoard(itemId, boardId, el) {
+function toggleItemCollection(itemId, boardId, el) {
   const item = myItems.find(i => i.localId === itemId);
   if (!item) return;
   if (!item.boards) item.boards = [];
@@ -2641,7 +2967,7 @@ function toggleItemBoard(itemId, boardId, el) {
     el.style.borderColor = 'var(--black)';
     el.style.background = 'var(--gray-50)';
     el.querySelector('span:last-child').textContent = '\u2713';
-    showToast('Added to board!');
+    showToast('Added to collection!');
   }
   if (item.id) {
     _supaClient.from('items').update({ boards: item.boards }).eq('id', item.id).then(() => {});
@@ -4220,6 +4546,7 @@ function activatePro() {
   isPro = true;
   document.getElementById('pro-banner').style.display = 'none';
   document.getElementById('pro-badge-settings').style.display = 'flex';
+  const gr = document.getElementById('settings-groups-row'); if (gr) gr.style.display = '';
   // unlock emoji/colour pickers
   document.getElementById('ep-lock')?.style && (document.getElementById('ep-lock').textContent = '\u2713 Active');
   renderThemeGrid();
@@ -4783,34 +5110,51 @@ function showAuthError(screen, msg) {
       if (!window.supabase || !window.supabase.createClient) {
         throw new Error('Supabase SDK not loaded');
       }
-      _supaClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+      _supaClient = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+        auth: {
+          detectSessionInUrl: true,
+          flowType: 'implicit'
+        }
+      });
     } catch(e) {
       console.error('Supabase init failed:', e);
       showAuthScreen('login');
       return;
     }
 
-    // onAuthStateChange fires INITIAL_SESSION for both logged-in AND logged-out
-    // This is the single source of truth — no getSession race condition
+    // Auth state machine
+    // - INITIAL_SESSION fires first; if no session, wait briefly for SIGNED_IN (Google OAuth redirect)
+    // - SIGNED_IN fires after Google OAuth completes (may come after INITIAL_SESSION null)
+    // - SIGNED_OUT always goes to login
+    let appEntered = false;
+    let initialSessionHandled = false;
+
+    async function handleSession(user) {
+      if (appEntered) return;
+      appEntered = true;
+      currentSupaUser = user;
+      try { await loadProfile(user); } catch(e) { console.warn(e); }
+      enterApp();
+    }
+
     _supaClient.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AUTH]', event, session?.user?.email || 'no user', 'appEntered:', appEntered);
       if (event === 'INITIAL_SESSION') {
+        initialSessionHandled = true;
         if (session?.user) {
-          currentSupaUser = session.user;
-          try { await loadProfile(session.user); } catch(e) { console.warn(e); }
-          enterApp();
+          await handleSession(session.user);
         } else {
-          showAuthScreen('login');
+          setTimeout(() => {
+            console.log('[AUTH] timeout fired, appEntered:', appEntered);
+            if (!appEntered) showAuthScreen('login');
+          }, 800);
         }
       }
       if (event === 'SIGNED_IN' && session?.user) {
-        // Handles Google OAuth redirect back to app
-        if (!currentSupaUser) {
-          currentSupaUser = session.user;
-          try { await loadProfile(session.user); } catch(e) { console.warn(e); }
-          enterApp();
-        }
+        await handleSession(session.user);
       }
       if (event === 'SIGNED_OUT') {
+        appEntered = false;
         currentSupaUser = null;
         currentProfile = null;
         showAuthScreen('login');
