@@ -3344,7 +3344,17 @@ async function searchFriends() {
         .ilike('handle', `%${qClean}%`)
         .limit(20)
     ]);
-    console.log('[SEARCH] q:', qClean, 'name results:', nameRes.data?.length, nameRes.error?.message, 'handle results:', handleRes.data?.length, handleRes.error?.message);
+    const nameCount = nameRes.data?.length ?? 0;
+    const handleCount = handleRes.data?.length ?? 0;
+    const nameErr = nameRes.error?.message || '';
+    const handleErr = handleRes.error?.message || '';
+    console.log('[SEARCH] q:', qClean, '| name hits:', nameCount, nameErr, '| handle hits:', handleCount, handleErr);
+
+    // If both errored, show the error to the user
+    if (nameErr && handleErr) {
+      resultsEl.innerHTML = `<div style="text-align:center;padding:20px;color:#ef4444;font-size:13px;">Search error: ${esc(nameErr)}</div>`;
+      return;
+    }
 
     // Merge + deduplicate, exclude self
     const seen = new Set([currentSupaUser?.id || '']);
@@ -3366,7 +3376,9 @@ async function searchFriends() {
       resultsEl.innerHTML = `<div style="text-align:center;padding:32px 20px;">
         <div style="font-size:32px;margin-bottom:8px;">🤷</div>
         <div style="font-size:13px;font-weight:600;color:var(--black);">No one found for "${esc(q)}"</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">Try a different name or @handle</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">
+          ${nameErr || handleErr ? 'DB error — check console' : `Searched ${nameCount + handleCount} profiles. Make sure they've signed up!`}
+        </div>
       </div>`;
       return;
     }
@@ -4779,11 +4791,9 @@ let userHandle = '@user';
 const MAX_PHOTOS_FREE = 1;
 const MAX_PHOTOS_PRO = 5;
 
-function activatePro() {
-  // Stripe not yet live — show waitlist toast
-  showToast('\u2726 FitShare Plus launching soon — we\'ll notify you! \uD83C\uDF89');
-  // DEV ONLY: hold shift to bypass for testing
-  // (remove this bypass before production launch)
+async function activatePro() {
+  if (!currentSupaUser) { showToast('Please log in first'); return; }
+  // Dev bypass
   if (window.__devUnlockPro) {
     isPro = true;
     document.getElementById('pro-banner').style.display = 'none';
@@ -4793,6 +4803,22 @@ function activatePro() {
     renderThemeGrid();
     showToast('\u2726 Dev mode: Pro unlocked');
     setTimeout(() => goBack(), 400);
+    return;
+  }
+  // Live Stripe Checkout
+  try {
+    showToast('Opening checkout\u2026');
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentSupaUser.id, email: currentSupaUser.email })
+    });
+    const json = await res.json();
+    if (json.error) { showToast('Error: ' + json.error); return; }
+    window.location.href = json.url;
+  } catch(e) {
+    showToast('Could not open checkout \u2014 try again');
+    console.error('activatePro error:', e);
   }
 }
 
@@ -5434,6 +5460,20 @@ async function loadOtherItems() {
 
 // == ENTER APP after successful auth ==
 async function enterApp() {
+  // Check if returning from Stripe Checkout
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('plus') === 'success') {
+    // Reload profile — webhook may have already updated is_pro
+    setTimeout(async () => {
+      await loadProfile(currentSupaUser);
+      showToast('✦ Welcome to FitShare Plus! 🎉');
+      showScreen('pro'); // show the pro screen
+    }, 1500);
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (urlParams.get('plus') === 'cancelled') {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
   await loadMyItems();
   loadOtherItems();    // non-blocking
   loadFriends();       // non-blocking
@@ -5501,23 +5541,37 @@ async function doLogin() {
     _loginAttempts.count = 0;
   }
 
-  const { data, error } = await _supaClient.auth.signInWithPassword({ email, password });
+  let data, error;
+  try {
+    ({ data, error } = await _supaClient.auth.signInWithPassword({ email, password }));
+  } catch(e) {
+    btn.textContent = 'Log In'; btn.style.opacity = '1'; btn.disabled = false;
+    showAuthError('login', 'Connection error — check your internet and try again');
+    console.error('[LOGIN] fetch threw:', e);
+    return;
+  }
 
   btn.textContent = 'Log In';
   btn.style.opacity = '1';
   btn.disabled = false;
 
   if (error) {
-    let msg = error.message;
-    if (msg === 'Invalid login credentials') msg = 'Wrong email or password';
-    else if (msg.includes('Failed to fetch') || msg.includes('fetch')) msg = 'Connection error — check your internet or try again';
-    else if (msg.includes('Email not confirmed')) msg = 'Please confirm your email first — check your inbox';
+    let msg = error.message || String(error);
+    console.error('[LOGIN] error:', msg);
+    if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) msg = 'Wrong email or password';
+    else if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) msg = 'Please confirm your email — check your inbox';
+    else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) msg = 'Connection error — try again';
     showAuthError('login', msg);
     return;
   }
 
+  if (!data?.user) {
+    showAuthError('login', 'Login failed — please try again');
+    return;
+  }
+
   _loginAttempts.count = 0;
-  appEntered = true; // block onAuthStateChange SIGNED_IN from double-entering
+  appEntered = true;
   currentSupaUser = data.user;
   await loadProfile(data.user);
   enterApp();
