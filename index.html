@@ -1882,6 +1882,11 @@
       <div id="vis-group-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
     </div>
 
+    <div class="field-label" style="margin-top:16px;">Add to Collection <span style="font-size:11px;font-weight:400;color:var(--gray-400);">optional</span></div>
+    <div id="add-item-collection-picker" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+      <div class="size-chip active" onclick="selectItemCollection(null, this)" id="item-col-none" style="font-size:12px;">None</div>
+    </div>
+
     <button class="btn-primary" onclick="addItem()">Add Item</button>
   </div>
 </div>
@@ -2319,13 +2324,16 @@ async function searchPeople(q) {
     const initial = name[0]?.toUpperCase() || '?';
     const isFriend = friendIds.has(p.id);
     const color = p.avatar_color || '#2DD4BF';
-    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100);">
-      <div style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">${initial}</div>
+    const avatarEl = p.avatar_url
+      ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : `<span style="font-size:18px;font-weight:700;color:white;">${initial}</span>`;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="openUserProfile('${p.id}')">
+      <div style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${avatarEl}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:700;color:var(--black);">${esc(name)}</div>
         <div style="font-size:12px;color:var(--gray-500);">${esc(p.handle||'')}</div>
       </div>
-      <button onclick="toggleFollowFromSearch('${p.id}',this)" style="padding:8px 16px;border-radius:20px;border:1.5px solid ${isFriend?'var(--gray-300)':'var(--black)'};background:${isFriend?'white':'var(--black)'};color:${isFriend?'var(--gray-700)':'white'};font-size:12px;font-weight:700;cursor:pointer;">
+      <button onclick="event.stopPropagation();toggleFollowFromSearch('${p.id}',this)" style="padding:8px 16px;border-radius:20px;border:1.5px solid ${isFriend?'var(--gray-300)':'var(--black)'};background:${isFriend?'white':'var(--black)'};color:${isFriend?'var(--gray-700)':'white'};font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">
         ${isFriend ? 'Friends' : 'Add Friend'}
       </button>
     </div>`;
@@ -2628,6 +2636,30 @@ function submitBorrowRequest() {
 // ==========================================
 // ADD ITEM + AI
 // ==========================================
+function selectItemCollection(id, el) {
+  _selectedItemCollectionId = id;
+  document.querySelectorAll('#add-item-collection-picker .size-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function populateItemCollectionPicker() {
+  const picker = document.getElementById('add-item-collection-picker');
+  if (!picker) return;
+  // Keep "None" chip, rebuild rest
+  picker.innerHTML = `<div class="size-chip active" onclick="selectItemCollection(null, this)" id="item-col-none" style="font-size:12px;">None</div>`;
+  _selectedItemCollectionId = null;
+  if (collections && collections.length > 0) {
+    collections.forEach(col => {
+      const chip = document.createElement('div');
+      chip.className = 'size-chip';
+      chip.style.fontSize = '12px';
+      chip.textContent = (col.emoji ? col.emoji + ' ' : '') + col.name;
+      chip.onclick = function() { selectItemCollection(col.id, this); };
+      picker.appendChild(chip);
+    });
+  }
+}
+
 function openAddModal() {
   uploadedPhotoData = null;
   document.getElementById('item-title').value = '';
@@ -2652,6 +2684,7 @@ function openAddModal() {
     });
   });
   updateSizeOptions();
+  populateItemCollectionPicker();
   document.getElementById('add-modal').classList.add('open');
 }
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
@@ -2944,13 +2977,22 @@ async function addItem() {
     emoji: '\uD83D\uDC55',
     visibility,
     group_id,
+    collectionId: _selectedItemCollectionId || null,
     likes: 0, liked: false, requested: false,
     affiliate: window._pendingAffiliate || null,
   };
   myItems.unshift(newItem);
+  // Add to collection if selected
+  if (_selectedItemCollectionId) {
+    const col = collections.find(col => col.id === _selectedItemCollectionId);
+    if (col) {
+      if (!col.items) col.items = [];
+      col.items.push(newItem.localId);
+    }
+  }
   window._pendingAffiliate = null;
   closeAddModal();
-  showToast('Item added to your wardrobe! \uD83C\uDF89');
+  showToast('Item added to your wardrobe! 🎉');
   renderWardrobe();
   document.getElementById('my-items-count').textContent = myItems.length;
   // Save to Supabase in background
@@ -3174,8 +3216,6 @@ function updateNotifBells() {
 }
 
 function renderNotifications() {
-  // Notifications are driven by real borrow requests for now
-  // Show pending borrow requests as notifications, plus empty state
   const notifList = document.getElementById('notif-list');
   if (!notifList) return;
   const requestNotifs = borrowRequests.filter(r => r.status === 'pending');
@@ -3188,18 +3228,71 @@ function renderNotifications() {
       </div>`;
     return;
   }
-  notifList.innerHTML = requestNotifs.map(r => `
-    <div class="notif-item unread">
-      <div class="notif-avatar" style="background:${esc(r.fromColor)}">${esc(r.fromAvatar)}</div>
-      <div class="notif-body">
-        <p><strong>${esc(r.from)}</strong> wants to borrow your <strong>${esc(r.item)}</strong></p>
-        <div style="font-size:12px;color:var(--gray-500);margin-top:1px;">${esc(r.fromDate)} → ${esc(r.toDate)}</div>
-        <div class="notif-time">Just now</div>
-        <div class="notif-actions">
-          <button class="notif-view-btn" onclick="goToRequests()">View Request →</button>
+  notifList.innerHTML = requestNotifs.map(r => {
+    // Find item image
+    const reqItem = myItems.find(i => i.id === r.itemId || i.localId === r.itemId);
+    const thumbHTML = reqItem?.imageData
+      ? `<div onclick="openItemDetail('${r.itemId}')" style="cursor:pointer;width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--gray-200);">
+           <img src="${reqItem.imageData}" style="width:100%;height:100%;object-fit:cover;">
+         </div>`
+      : `<div onclick="openItemDetail('${r.itemId}')" style="cursor:pointer;width:52px;height:52px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${r.itemEmoji||'👕'}</div>`;
+
+    return `<div class="notif-item unread" id="notif-${r.id}">
+      <div style="display:flex;gap:10px;align-items:flex-start;width:100%;">
+        <div class="notif-avatar" style="background:${esc(r.fromColor)};flex-shrink:0;">${esc(r.fromAvatar)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;color:var(--black);margin-bottom:4px;">
+            <strong>${esc(r.from)}</strong> wants to borrow your <strong>${esc(r.item)}</strong>
+          </div>
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">📅 ${esc(r.fromDate||'')} → ${esc(r.toDate||'')}${r.message ? ` · "${esc(r.message)}"` : ''}</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            ${thumbHTML}
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+              <div style="display:flex;gap:6px;">
+                <button onclick="approveFromNotif('${r.id}')" style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#22c55e;color:white;font-size:12px;font-weight:700;cursor:pointer;">✓ Approve</button>
+                <button onclick="declineFromNotif('${r.id}')" style="flex:1;padding:8px 10px;border-radius:10px;border:none;background:#ef4444;color:white;font-size:12px;font-weight:700;cursor:pointer;">✕ Decline</button>
+              </div>
+              <button onclick="goToThreadForRequest('${r.id}')" style="width:100%;padding:7px;border-radius:10px;border:1.5px solid var(--gray-200);background:transparent;color:var(--black);font-size:12px;font-weight:600;cursor:pointer;">Open in Messages →</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+async function approveFromNotif(reqId) {
+  const r = borrowRequests.find(x => x.id == reqId || x.id === reqId);
+  if (!r) return;
+  const el = document.getElementById('notif-' + reqId);
+  if (el) {
+    el.style.transition = 'opacity 0.3s';
+    el.style.opacity = '0.4';
+    el.style.pointerEvents = 'none';
+  }
+  await approveBorrow(reqId);
+  showToast('✓ Approved!');
+}
+
+async function declineFromNotif(reqId) {
+  const r = borrowRequests.find(x => x.id == reqId || x.id === reqId);
+  if (!r) return;
+  const el = document.getElementById('notif-' + reqId);
+  if (el) { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  await declineBorrow(reqId);
+  showToast('Request declined');
+}
+
+function goToThreadForRequest(reqId) {
+  const r = borrowRequests.find(x => x.id == reqId || x.id === reqId);
+  if (!r) { goToRequests(); return; }
+  // Find or create thread for this request
+  const t = threads.find(th => th.reqId === reqId || (th.itemId === r.itemId && th.partnerId === r.fromUserId));
+  if (t) {
+    openThread(t.id);
+  } else {
+    goToRequests();
+  }
 }
 
 function goToRequests() {
@@ -3304,7 +3397,22 @@ async function loadBorrowRequests() {
         depositAmount: 20
       };
     });
+    // Sync borrow requests into message threads so lender sees them in Messages
+    borrowRequests.forEach(r => {
+      const existing = threads.find(t => t.reqId === r.id || (t.itemId === r.itemId && t.partnerId === r.fromUserId));
+      if (!existing) {
+        const t = getOrCreateThread(r.fromUserId, r.from, r.fromAvatar, r.fromColor, r.itemId, r.item, r.itemEmoji);
+        t.reqId = r.id;
+        t.partnerId = r.fromUserId;
+        if (r.message) t.messages.push({ from: 'theirs', text: r.message, time: 'Earlier' });
+        t.messages.push({ type: 'request_card', fromDate: r.fromDate, toDate: r.toDate, time: 'Earlier', pending: true });
+        t.status = 'Pending approval';
+        t.unread = true;
+      }
+    });
     renderBorrowRequests();
+    renderInbox();
+    renderNotifications();
   }
 }
 
@@ -3749,11 +3857,15 @@ function setRequestDepositCustom(id, val) {
 function getOrCreateThread(fromId, fromName, fromAvatar, fromColor, itemId, itemTitle, itemEmoji) {
   let t = threads.find(x => x.partner === fromName && x.itemId === itemId);
   if (!t) {
+    // Determine if current user is the item owner (lender) or the requester
+    const itemObj = myItems.find(i => i.id === itemId || i.localId === itemId);
+    const iAmOwner = !!itemObj; // if item is in myItems, I own it
     t = {
       id: 't' + Date.now(),
       partner: fromName, partnerAvatar: fromAvatar, partnerColor: fromColor,
       itemId, itemTitle, itemEmoji,
-      status: 'Pending your reply',
+      iAmOwner,   // true = I'm the lender; false = I'm the requester
+      status: iAmOwner ? 'Pending your reply' : 'Request sent · awaiting reply',
       unread: true,
       messages: []
     };
@@ -3763,13 +3875,18 @@ function getOrCreateThread(fromId, fromName, fromAvatar, fromColor, itemId, item
 }
 
 function approveBorrow(id) {
-  const r = borrowRequests.find(x => x.id === id);
+  const r = borrowRequests.find(x => x.id === id || x.id == id);
   if (!r) return;
   r.status = 'approved';
 
-  // Find or create thread for this person + item
-  const item = sampleItems.find(i => i.title === r.item) || { id: null, title: r.item, emoji: '\uD83D\uDC55' };
-  const t = getOrCreateThread(r.id, r.from, r.fromAvatar, r.fromColor, item.id, r.item, item.emoji || '\uD83D\uDC55');
+  // Find existing thread from loadBorrowRequests sync, or create new one
+  const existingThread = threads.find(t => t.reqId === r.id || (t.itemId === r.itemId && t.partnerId === r.fromUserId));
+  const itemObj = myItems.find(i => i.id === r.itemId || i.localId === r.itemId) || { id: r.itemId, title: r.item, emoji: r.itemEmoji || '👕' };
+  const t = existingThread || getOrCreateThread(r.fromUserId, r.from, r.fromAvatar, r.fromColor, r.itemId, r.item, r.itemEmoji || '👕');
+  if (!existingThread) { t.reqId = r.id; t.partnerId = r.fromUserId; }
+  // Mark any pending request card as approved
+  const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
+  if (reqMsg) { reqMsg.pending = false; reqMsg.approved = true; }
 
   // Push a system approval card into the thread
   const depositMsg = r.depositEnabled && r.depositAmount
@@ -3792,12 +3909,15 @@ function approveBorrow(id) {
 }
 
 function declineBorrow(id) {
-  const r = borrowRequests.find(x => x.id === id);
+  const r = borrowRequests.find(x => x.id === id || x.id == id);
   if (!r) return;
   r.status = 'declined';
 
-  const item = sampleItems.find(i => i.title === r.item) || { id: null, title: r.item, emoji: '\uD83D\uDC55' };
-  const t = getOrCreateThread(r.id, r.from, r.fromAvatar, r.fromColor, item.id, r.item, item.emoji || '\uD83D\uDC55');
+  const existingThread = threads.find(t => t.reqId === r.id || (t.itemId === r.itemId && t.partnerId === r.fromUserId));
+  const t = existingThread || getOrCreateThread(r.fromUserId, r.from, r.fromAvatar, r.fromColor, r.itemId, r.item, r.itemEmoji || '👕');
+  if (!existingThread) { t.reqId = r.id; t.partnerId = r.fromUserId; }
+  const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
+  if (reqMsg) { reqMsg.pending = false; reqMsg.declined = true; }
   t.messages.push(
     { type: 'system_event', text: '\u2717 Borrow request declined', time: 'Just now' },
     { from: 'me', text: "Sorry, those dates don't work for me \u2014 feel free to suggest other dates!", time: 'Just now' }
@@ -4808,17 +4928,28 @@ function renderChatMessages() {
       const isDeclined = msg.declined;
       const isPending = msg.pending && !isApproved && !isDeclined;
       const isNegotiating = msg.negotiating;
+      const threadItem = currentThread ? getItemById(currentThread.itemId) : null;
+      const itemThumbHTML = threadItem?.imageData
+        ? `<div onclick="openItemDetail('${currentThread?.itemId}')" style="cursor:pointer;width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--gray-200);">
+            <img src="${threadItem.imageData}" style="width:100%;height:100%;object-fit:cover;">
+           </div>`
+        : threadItem
+          ? `<div onclick="openItemDetail('${currentThread?.itemId}')" style="cursor:pointer;width:56px;height:56px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1.5px solid var(--gray-200);">${threadItem.emoji||'👕'}</div>`
+          : '';
       return `
-        <div class="msg-system">\uD83D\uDCC5 Borrow request</div>
+        <div class="msg-system">📅 Borrow request</div>
         <div class="msg-approve-card">
-          <div class="card-title">Borrow Request</div>
-          <div class="card-dates">${formatDisplayDate(msg.fromDate)} \u2192 ${formatDisplayDate(msg.toDate)}</div>
-          ${isPending && !isNegotiating ? `
+          ${itemThumbHTML ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">${itemThumbHTML}<div><div class="card-title" style="margin:0 0 2px;">${esc(currentThread?.itemTitle||'')}</div><div style="font-size:11px;color:var(--gray-500);">Tap photo to view item</div></div></div>` : `<div class="card-title">Borrow Request</div>`}
+          <div class="card-dates">${formatDisplayDate(msg.fromDate)} → ${formatDisplayDate(msg.toDate)}</div>
+          ${isPending && !isNegotiating ? (() => {
+            const amOwner = currentThread?.iAmOwner !== false && (currentThread?.iAmOwner || !!myItems.find(i => i.id === currentThread?.itemId || i.localId === currentThread?.itemId));
+            return amOwner ? `
             <div class="card-btns">
-              <button class="approve" onclick="approveFromChat(${i})">Approve \u2713</button>
+              <button class="approve" onclick="approveFromChat(${i})">Approve ✓</button>
               <button class="negotiate-btn" onclick="startNegotiate(${i})">Counter offer</button>
               <button class="decline" onclick="declineFromChat(${i})">Decline</button>
-            </div>` : ''}
+            </div>` : `<div style="font-size:12px;color:var(--gray-500);font-weight:600;margin-top:6px;">⏳ Waiting for response…</div>`;
+          })() : ''}
           ${isNegotiating ? `
             <div class="negotiate-form" id="neg-form-${i}">
               <div style="font-size:12px;font-weight:700;color:var(--black);margin-bottom:8px;">Suggest new dates</div>
@@ -5194,6 +5325,7 @@ function previewName() {
 
 let _pendingAvatarColour = null;
 let _pendingAvatarImage = null; // base64 data URL (cropped)
+let _selectedItemCollectionId = null; // collection chosen in add item modal
 
 // ── Avatar upload + crop ──────────────────────────────────
 let _cropImg = null, _cropX = 0, _cropY = 0, _cropScale = 1;
@@ -5493,9 +5625,14 @@ async function saveProfile() {
   if (_pendingAvatarImage) {
     userAvatarImage = _pendingAvatarImage;
     _pendingAvatarImage = null;
-    // Update all avatar spots
     applyAvatarImageEverywhere(userAvatarImage);
-    await _supaClient.from('profiles').update({ avatar_url: userAvatarImage }).eq('id', currentSupaUser.id);
+    const { error: avatarErr } = await _supaClient.from('profiles')
+      .update({ avatar_url: userAvatarImage })
+      .eq('id', currentSupaUser.id);
+    if (avatarErr) {
+      console.error('[AVATAR] Save failed:', avatarErr);
+      showToast('Photo saved locally but failed to sync — try again');
+    }
   } else if (_pendingAvatarColour) {
     userAvatarColour = _pendingAvatarColour;
     userAvatarImage = null;
@@ -5831,6 +5968,95 @@ async function enterApp() {
   renderThemeGrid();
   // Start onboarding for new users (delayed so UI is painted)
   setTimeout(startOnboarding, 600);
+  // Set up real-time subscriptions
+  setupRealtimeSubscriptions();
+}
+
+function setupRealtimeSubscriptions() {
+  if (!currentSupaUser || !_supaClient) return;
+  // Clean up any existing channels
+  _supaClient.removeAllChannels?.();
+
+  // 1. New borrow requests incoming (owner receives)
+  _supaClient.channel('borrow-requests-incoming')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'borrow_requests',
+      filter: `owner_id=eq.${currentSupaUser.id}`
+    }, async payload => {
+      console.log('[RT] New borrow request:', payload.new);
+      await loadBorrowRequests();
+      // Show notification badge + toast
+      showToast('📦 New borrow request!');
+      updateNotifBells();
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'borrow_requests',
+      filter: `requester_id=eq.${currentSupaUser.id}`
+    }, payload => {
+      // Requester gets notified when their request is approved/declined
+      console.log('[RT] Request updated:', payload.new.status);
+      const r = payload.new;
+      if (r.status === 'approved') {
+        showToast('✓ Your borrow request was approved! 🎉');
+        // Update the thread
+        const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
+        if (t) {
+          const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
+          if (reqMsg) { reqMsg.pending = false; reqMsg.approved = true; }
+          t.messages.push({ type: 'system_event', text: '✓ Borrow approved!', time: 'Now' });
+          t.status = 'Approved ✓';
+          t.unread = true;
+          renderInbox();
+          updateNotifBells();
+        }
+      } else if (r.status === 'declined') {
+        showToast('Your borrow request was declined — try sending a counter offer');
+        const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
+        if (t) {
+          const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
+          if (reqMsg) { reqMsg.pending = false; reqMsg.declined = true; }
+          t.messages.push({ type: 'system_event', text: '✕ Request declined · suggest new dates?', time: 'Now' });
+          t.unread = true;
+          renderInbox();
+          updateNotifBells();
+        }
+      }
+    })
+    .subscribe();
+
+  // 2. New follower (someone added me)
+  _supaClient.channel('follows-incoming')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'follows',
+      filter: `following_id=eq.${currentSupaUser.id}`
+    }, async payload => {
+      console.log('[RT] New follower:', payload.new.follower_id);
+      await loadFriends();
+      showToast('👋 Someone sent you a friend request!');
+      updateNotifBells();
+    })
+    .subscribe();
+
+  // 3. My items updated (profile/avatar changes reflected)
+  _supaClient.channel('profile-updates')
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'profiles',
+      filter: `id=eq.${currentSupaUser.id}`
+    }, payload => {
+      console.log('[RT] Profile updated externally');
+      // Only update if it wasn't us who triggered it
+    })
+    .subscribe();
+
+  console.log('[RT] Subscriptions active');
 }
 
 // == LOGIN RATE LIMITER (client-side guard, server also enforces) ==
@@ -6122,9 +6348,10 @@ async function saveProfileToSupabase(name, handle) {
     display_name: name,
     handle: handle,
     avatar_color: userAvatarColour || '#2DD4BF',
-    avatar_url: userAvatarImage || null,
     updated_at: new Date().toISOString()
   };
+  // Only include avatar_url if we have one — avoids overwriting with null
+  if (userAvatarImage) updates.avatar_url = userAvatarImage;
   await _supaClient.from('profiles').upsert(updates);
 }
 
@@ -6160,7 +6387,10 @@ function showAuthError(screen, msg) {
       _supaClient = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
         auth: {
           detectSessionInUrl: true,
-          flowType: 'implicit'
+          flowType: 'implicit',
+          persistSession: true,
+          autoRefreshToken: true,
+          storageKey: 'fitshare_auth'
         }
       });
     } catch(e) {
