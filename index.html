@@ -818,17 +818,25 @@
     </div>
   </div>
   <div class="scroll-content">
-    <!-- Rich search bar -->
-    <div style="padding:12px 16px 0;display:flex;gap:8px;align-items:center;">
-      <div class="search-bar" style="flex:1;margin:0;" onclick="openExploreSearch()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="explore-search-input" placeholder="Search items, brands, styles..." oninput="filterExplore(this.value)" onfocus="showExploreRecents()">
-      </div>
-      <button onclick="openExploreFilters()" style="flex-shrink:0;padding:0 14px;height:42px;border-radius:12px;border:1.5px solid var(--gray-200);background:white;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;" id="filter-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="11" y1="18" x2="13" y2="18"></line></svg>
-        <span id="filter-btn-label">Filter</span>
-      </button>
+    <!-- Explore tab row: Items / People -->
+    <div style="display:flex;border-bottom:1px solid var(--gray-200);">
+      <button id="etab-items" onclick="setExploreTab('items')" style="flex:1;padding:12px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--black);color:var(--black);">Items</button>
+      <button id="etab-people" onclick="setExploreTab('people')" style="flex:1;padding:12px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-400);">People</button>
     </div>
+
+    <!-- Items view -->
+    <div id="explore-items-view">
+      <!-- Rich search bar -->
+      <div style="padding:12px 16px 0;display:flex;gap:8px;align-items:center;">
+        <div class="search-bar" style="flex:1;margin:0;" onclick="openExploreSearch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="explore-search-input" placeholder="Search items, brands, styles..." oninput="filterExplore(this.value)" onfocus="showExploreRecents()">
+        </div>
+        <button onclick="openExploreFilters()" style="flex-shrink:0;padding:0 14px;height:42px;border-radius:12px;border:1.5px solid var(--gray-200);background:white;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;" id="filter-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+          <span id="filter-btn-label">Filter</span>
+        </button>
+      </div>
 
     <!-- Recent searches (hidden by default) -->
     <div id="explore-recents-panel" style="display:none;padding:8px 16px 0;">
@@ -860,7 +868,23 @@
       </select>
     </div>
 
-    <div class="feed-grid" id="explore-grid"></div>
+      <div class="feed-grid" id="explore-grid"></div>
+    </div> <!-- /explore-items-view -->
+
+    <!-- People view -->
+    <div id="explore-people-view" style="display:none;padding:12px 16px;">
+      <div class="search-bar" style="margin-bottom:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="people-search-input" placeholder="Search by name or @handle..." oninput="searchPeople(this.value)">
+      </div>
+      <div id="people-search-results">
+        <div style="text-align:center;padding:32px 20px;">
+          <div style="font-size:36px;margin-bottom:10px;">🧑‍🤝‍🧑</div>
+          <div style="font-size:14px;font-weight:600;color:var(--black);margin-bottom:4px;">Find people</div>
+          <div style="font-size:12px;color:var(--gray-500);">Search by name or @handle to find and follow people</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1145,7 +1169,7 @@
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
-    <div class="settings-row">
+    <div class="settings-row" onclick="window.location.href='mailto:help@fitshare.co.uk?subject=FitShare Support'">
       <div class="settings-row-left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         <span>Help &amp; Support</span>
@@ -1269,8 +1293,20 @@
   </div>
   <div class="scroll-content" style="padding:20px 16px 100px;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
-      <div class="avatar-lg" id="edit-avatar-preview" style="font-size:28px;width:72px;height:72px;">h</div>
-      <div style="font-size:13px;color:var(--teal-dark);font-weight:600;cursor:pointer;">Change photo</div>
+      <div class="avatar-lg" id="edit-avatar-preview" style="font-size:28px;width:72px;height:72px;cursor:pointer;" onclick="toggleAvatarColourPicker()">h</div>
+      <div style="font-size:13px;color:var(--teal-dark);font-weight:600;cursor:pointer;margin-top:4px;" onclick="toggleAvatarColourPicker()">Change colour</div>
+      <div id="avatar-colour-picker" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;padding:12px;background:var(--gray-50);border-radius:12px;">
+        <div onclick="setAvatarColour('#2DD4BF',this)" style="width:32px;height:32px;border-radius:50%;background:#2DD4BF;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#f43f5e',this)" style="width:32px;height:32px;border-radius:50%;background:#f43f5e;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#a855f7',this)" style="width:32px;height:32px;border-radius:50%;background:#a855f7;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#3b82f6',this)" style="width:32px;height:32px;border-radius:50%;background:#3b82f6;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#f59e0b',this)" style="width:32px;height:32px;border-radius:50%;background:#f59e0b;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#10b981',this)" style="width:32px;height:32px;border-radius:50%;background:#10b981;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#ec4899',this)" style="width:32px;height:32px;border-radius:50%;background:#ec4899;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#6366f1',this)" style="width:32px;height:32px;border-radius:50%;background:#6366f1;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#111111',this)" style="width:32px;height:32px;border-radius:50%;background:#111111;cursor:pointer;border:2px solid transparent;"></div>
+        <div onclick="setAvatarColour('#f97316',this)" style="width:32px;height:32px;border-radius:50%;background:#f97316;cursor:pointer;border:2px solid transparent;"></div>
+      </div>
     </div>
 
     <div class="field-label">Display Name</div>
@@ -1810,9 +1846,11 @@
     </div>
     <!-- Group picker for Plus members -->
     <div id="vis-group-picker" style="display:none;margin-top:10px;">
-      <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;">Visible to which group?</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:12px;color:var(--gray-500);">Visible to which group?</div>
+        <button onclick="openCreateGroupModal()" style="width:28px;height:28px;border-radius:50%;background:var(--black);color:white;border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">＋</button>
+      </div>
       <div id="vis-group-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
-      <button onclick="openManageGroups()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1.5px dashed var(--gray-300);background:none;font-size:12px;font-weight:600;color:var(--teal-dark);cursor:pointer;">＋ Create new group</button>
     </div>
 
     <button class="btn-primary" onclick="addItem()">Add Item</button>
@@ -2188,6 +2226,86 @@ function cardHTML(item, isOwn) {
 let recentSearches = JSON.parse(localStorage.getItem('fs_recent_searches') || '[]');
 let currentCondFilter = 'All';
 let exploreSearchQuery = '';
+
+function setExploreTab(tab) {
+  const isItems = tab === 'items';
+  document.getElementById('explore-items-view').style.display = isItems ? '' : 'none';
+  document.getElementById('explore-people-view').style.display = isItems ? 'none' : '';
+  document.getElementById('etab-items').style.borderBottomColor = isItems ? 'var(--black)' : 'transparent';
+  document.getElementById('etab-items').style.color = isItems ? 'var(--black)' : 'var(--gray-400)';
+  document.getElementById('etab-people').style.borderBottomColor = isItems ? 'transparent' : 'var(--black)';
+  document.getElementById('etab-people').style.color = isItems ? 'var(--gray-400)' : 'var(--black)';
+  if (!isItems) {
+    const inp = document.getElementById('people-search-input');
+    if (inp) inp.focus();
+  }
+}
+
+async function searchPeople(q) {
+  const container = document.getElementById('people-search-results');
+  if (!q || q.trim().length < 2) {
+    container.innerHTML = `<div style="text-align:center;padding:32px 20px;">
+      <div style="font-size:36px;margin-bottom:10px;">🧑‍🤝‍🧑</div>
+      <div style="font-size:14px;font-weight:600;color:var(--black);margin-bottom:4px;">Find people</div>
+      <div style="font-size:12px;color:var(--gray-500);">Search by name or @handle to find and follow people</div>
+    </div>`;
+    return;
+  }
+  const search = q.trim().toLowerCase();
+  const { data: results } = await _supaClient
+    .from('profiles')
+    .select('id, display_name, handle, avatar_color')
+    .or(`display_name.ilike.%${search}%,handle.ilike.%${search}%`)
+    .neq('id', currentSupaUser?.id || '')
+    .limit(20);
+
+  if (!results || results.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:32px 20px;color:var(--gray-500);font-size:13px;">No results for "${esc(q)}"</div>`;
+    return;
+  }
+
+  const friendIds = new Set(friends.map(f => f.id));
+  container.innerHTML = results.map(p => {
+    const name = p.display_name || p.handle || 'User';
+    const initial = name[0]?.toUpperCase() || '?';
+    const isFriend = friendIds.has(p.id);
+    const color = p.avatar_color || '#2DD4BF';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100);">
+      <div style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">${initial}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:var(--black);">${esc(name)}</div>
+        <div style="font-size:12px;color:var(--gray-500);">${esc(p.handle||'')}</div>
+      </div>
+      <button onclick="toggleFollowFromSearch('${p.id}',this)" style="padding:8px 16px;border-radius:20px;border:1.5px solid ${isFriend?'var(--gray-300)':'var(--black)'};background:${isFriend?'white':'var(--black)'};color:${isFriend?'var(--gray-700)':'white'};font-size:12px;font-weight:700;cursor:pointer;">
+        ${isFriend ? 'Following' : '+ Follow'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleFollowFromSearch(userId, btn) {
+  const isFriend = friends.some(f => f.id === userId);
+  if (isFriend) {
+    await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
+    friends = friends.filter(f => f.id !== userId);
+    btn.textContent = '+ Follow';
+    btn.style.background = 'var(--black)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--black)';
+  } else {
+    await _supaClient.from('follows').upsert({ follower_id: currentSupaUser.id, following_id: userId });
+    const { data: p } = await _supaClient.from('profiles').select('id,display_name,handle,avatar_color').eq('id', userId).single();
+    if (p) {
+      const name = p.display_name || p.handle || 'User';
+      friends.push({ id: p.id, name, handle: p.handle||'@user', avatar: name[0]?.toUpperCase()||'?', color: p.avatar_color||'#2DD4BF' });
+    }
+    btn.textContent = 'Following';
+    btn.style.background = 'white';
+    btn.style.color = 'var(--gray-700)';
+    btn.style.borderColor = 'var(--gray-300)';
+    showToast('Following ' + (btn.closest('[style]')?.querySelector('[style*="font-weight:700"]')?.textContent || '') + ' ✓');
+  }
+}
 
 function openExploreFilters() {
   document.getElementById('explore-filter-modal').classList.add('open');
@@ -2654,12 +2772,13 @@ function renderGroupMembersList(selectedIds) {
     return;
   }
   el.innerHTML = friends.map(f => {
-    const name = f.display_name || f.handle || 'User';
+    const name = f.name || f.display_name || f.handle || 'User';
     const checked = selectedIds.includes(f.id);
+    const color = f.color || f.avatar_color || '#6366f1';
     return `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--gray-100);">
       <input type="checkbox" name="cg-member" value="${f.id}" ${checked?'checked':''} style="width:16px;height:16px;accent-color:var(--teal-dark);">
-      <div style="width:32px;height:32px;border-radius:50%;background:${f.avatar_color||'#6366f1'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${name[0].toUpperCase()}</div>
-      <div style="font-size:13px;font-weight:600;">${esc(name)}</div>
+      <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${name[0].toUpperCase()}</div>
+      <div><div style="font-size:13px;font-weight:600;">${esc(name)}</div><div style="font-size:11px;color:var(--gray-500);">${esc(f.handle||'')}</div></div>
     </label>`;
   }).join('');
 }
@@ -3129,7 +3248,14 @@ function renderFriends() {
 async function searchFriends() {
   const q = document.getElementById('friend-search-input').value.trim();
   const resultsEl = document.getElementById('friend-search-results');
-  if (!q) { resultsEl.innerHTML = ''; return; }
+  if (!q) { 
+    resultsEl.innerHTML = `<div style="text-align:center;padding:32px 20px;">
+      <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+      <div style="font-size:14px;font-weight:600;color:var(--black);margin-bottom:4px;">Find your friends</div>
+      <div style="font-size:12px;color:var(--gray-500);">Search by name or @handle</div>
+    </div>`;
+    return; 
+  }
   resultsEl.innerHTML = '<div style="padding:16px;color:var(--gray-400);font-size:13px;">Searching…</div>';
   const { data } = await _supaClient
     .from('profiles')
@@ -4534,6 +4660,7 @@ function submitClaim() {
 // PRO / FREEMIUM SYSTEM
 // ==========================================
 let isPro = false;
+let userAvatarColour = '#2DD4BF';
 const FREE_THEMES = ['default','dark','mint']; // 3 free themes
 let userEmoji = '';
 let userNameColour = '#111111';
@@ -4543,16 +4670,32 @@ const MAX_PHOTOS_FREE = 1;
 const MAX_PHOTOS_PRO = 5;
 
 function activatePro() {
-  isPro = true;
-  document.getElementById('pro-banner').style.display = 'none';
-  document.getElementById('pro-badge-settings').style.display = 'flex';
-  const gr = document.getElementById('settings-groups-row'); if (gr) gr.style.display = '';
-  // unlock emoji/colour pickers
-  document.getElementById('ep-lock')?.style && (document.getElementById('ep-lock').textContent = '\u2713 Active');
-  renderThemeGrid();
-  showToast('\u2726 Welcome to FitShare Pro! \uD83C\uDF89');
-  setTimeout(() => goBack(), 400);
+  // Stripe not yet live — show waitlist toast
+  showToast('\u2726 FitShare Plus launching soon — we\'ll notify you! \uD83C\uDF89');
+  // DEV ONLY: hold shift to bypass for testing
+  // (remove this bypass before production launch)
+  if (window.__devUnlockPro) {
+    isPro = true;
+    document.getElementById('pro-banner').style.display = 'none';
+    document.getElementById('pro-badge-settings').style.display = 'flex';
+    const gr = document.getElementById('settings-groups-row'); if (gr) gr.style.display = '';
+    document.getElementById('ep-lock')?.style && (document.getElementById('ep-lock').textContent = '\u2713 Active');
+    renderThemeGrid();
+    showToast('\u2726 Dev mode: Pro unlocked');
+    setTimeout(() => goBack(), 400);
+  }
 }
+
+// Dev helper — type fitshare_unlock_pro() in console to test pro features
+window.fitshare_unlock_pro = function() {
+  window.__devUnlockPro = true;
+  isPro = true;
+  document.getElementById('pro-banner') && (document.getElementById('pro-banner').style.display = 'none');
+  document.getElementById('pro-badge-settings') && (document.getElementById('pro-badge-settings').style.display = 'flex');
+  const gr = document.getElementById('settings-groups-row'); if (gr) gr.style.display = '';
+  renderThemeGrid();
+  showToast('\u2726 Dev: Pro unlocked');
+};
 
 function requirePro(featureName) {
   if (isPro) return true;
@@ -4590,10 +4733,50 @@ function previewName() {
   }
 }
 
-function saveProfile() {
+let _pendingAvatarColour = null;
+
+function toggleAvatarColourPicker() {
+  const picker = document.getElementById('avatar-colour-picker');
+  if (!picker) return;
+  picker.style.display = picker.style.display === 'none' ? 'flex' : 'none';
+}
+
+function setAvatarColour(colour, el) {
+  _pendingAvatarColour = colour;
+  // Update preview
+  const preview = document.getElementById('edit-avatar-preview');
+  if (preview) preview.style.background = colour;
+  // Highlight selected swatch
+  document.querySelectorAll('#avatar-colour-picker div').forEach(d => d.style.outline = 'none');
+  if (el) el.style.outline = '3px solid var(--black)';
+  // Hide picker after selection
+  setTimeout(() => {
+    const picker = document.getElementById('avatar-colour-picker');
+    if (picker) picker.style.display = 'none';
+  }, 300);
+}
+
+async function saveProfile() {
   userName = document.getElementById('edit-name')?.value.trim() || userName;
-  userHandle = document.getElementById('edit-handle')?.value.trim() || userHandle;
-  if (!userHandle.startsWith('@')) userHandle = '@' + userHandle;
+  const rawEditHandle = (document.getElementById('edit-handle')?.value.trim() || userHandle).replace('@','').toLowerCase().replace(/[^a-z0-9_.]/g,'');
+  const newHandle = '@' + rawEditHandle;
+
+  // If handle changed, check it's not taken
+  if (newHandle !== userHandle) {
+    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', newHandle).maybeSingle();
+    if (taken && taken.id !== currentSupaUser?.id) {
+      showToast('That username is already taken ✕');
+      return;
+    }
+  }
+  userHandle = newHandle;
+  
+  // Apply avatar colour if changed
+  if (_pendingAvatarColour) {
+    userAvatarColour = _pendingAvatarColour;
+    document.querySelectorAll('.avatar-lg').forEach(a => a.style.background = userAvatarColour);
+    _pendingAvatarColour = null;
+  }
   if (isPro) {
     userEmoji = selectedEmoji;
     userNameColour = selectedColour;
@@ -4784,6 +4967,13 @@ function applyProfileToUI(profile) {
   if (editName) editName.value = name;
   const editHandle = document.getElementById('edit-handle');
   if (editHandle) editHandle.value = handle;
+
+  // Avatar colour
+  const colour = profile.avatar_color || '#2DD4BF';
+  userAvatarColour = colour;
+  document.querySelectorAll('.avatar-lg').forEach(a => { a.style.background = colour; });
+  const editAvatarPrev = document.getElementById('edit-avatar-preview');
+  if (editAvatarPrev) editAvatarPrev.style.background = colour;
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
@@ -4966,9 +5156,21 @@ async function doSignup() {
   btn.disabled = true;
 
   try {
-    const cleanHandle = handle
-      ? (handle.startsWith('@') ? handle : '@' + handle)
-      : '@' + name.replace(/\s+/g,'').toLowerCase();
+    // Normalise handle: always lowercase, always starts with @
+    const rawHandle = handle
+      ? (handle.startsWith('@') ? handle.slice(1) : handle)
+      : name.replace(/\s+/g,'');
+    const cleanHandle = '@' + rawHandle.toLowerCase().replace(/[^a-z0-9_.]/g, '');
+
+    if (cleanHandle.length < 2) { showAuthError('signup', 'Please choose a username'); btn.textContent = 'Create Account'; btn.style.opacity = '1'; btn.disabled = false; return; }
+
+    // Check handle not already taken (case-insensitive)
+    const { data: existingHandle } = await _supaClient
+      .from('profiles')
+      .select('id')
+      .eq('handle', cleanHandle)
+      .maybeSingle();
+    if (existingHandle) { showAuthError('signup', 'That username is already taken — try another'); btn.textContent = 'Create Account'; btn.style.opacity = '1'; btn.disabled = false; return; }
 
     const { data, error } = await _supaClient.auth.signUp({
       email,
@@ -5073,12 +5275,14 @@ async function deleteItemFromSupabase(localId) {
 // == SAVE PROFILE ==
 async function saveProfileToSupabase(name, handle) {
   if (!currentSupaUser) return;
-  await _supaClient.from('profiles').upsert({
+  const updates = {
     id: currentSupaUser.id,
     display_name: name,
     handle: handle,
+    avatar_color: userAvatarColour || '#2DD4BF',
     updated_at: new Date().toISOString()
-  });
+  };
+  await _supaClient.from('profiles').upsert(updates);
 }
 
 // == HELPER ==
