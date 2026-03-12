@@ -768,7 +768,7 @@
 <!-- ========== HOME SCREEN ========== -->
 <div class="screen" id="screen-home">
   <div class="topbar">
-    <div class="topbar-icon" onclick="showScreen(&#39;friends&#39;)">
+    <div class="topbar-icon" id="home-friends-btn" onclick="showScreen(&#39;friends&#39;)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
     </div>
     <div class="topbar-logo">Fit<span>Share</span></div>
@@ -851,7 +851,7 @@
         <div class="profile-stats">
           <div class="stat"><span class="stat-num" id="my-items-count">0</span><span class="stat-lbl">Items</span></div>
           <div class="stat"><span class="stat-num" id="my-borrowed-count">0</span><span class="stat-lbl">Borrowed</span></div>
-          <div class="stat"><span class="stat-num" id="my-friends-count">3</span><span class="stat-lbl">Friends</span></div>
+          <div class="stat"><span class="stat-num" id="my-friends-count">0</span><span class="stat-lbl">Friends</span></div>
         </div>
       </div>
     </div>
@@ -1385,7 +1385,7 @@
       <span style="font-size:12px;color:var(--gray-400);">or scan a friend's code</span>
       <div style="flex:1;height:1px;background:var(--gray-200);"></div>
     </div>
-    <button onclick="showToast(&#39;&#128247; Camera scanner coming soon!&#39;)" style="
+    <button onclick="startQRScan()" id="qr-scan-btn" style="
       margin-top:14px;width:100%;max-width:320px;
       padding:13px;border-radius:14px;
       border:1.5px dashed var(--gray-300);background:transparent;
@@ -1396,6 +1396,14 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
       Scan a QR Code
     </button>
+    <!-- Camera preview (hidden until scanning) -->
+    <div id="qr-scanner-wrap" style="display:none;width:100%;max-width:320px;margin-top:14px;border-radius:18px;overflow:hidden;position:relative;background:#000;">
+      <video id="qr-video" style="width:100%;display:block;" autoplay muted playsinline></video>
+      <canvas id="qr-scan-canvas" style="display:none;"></canvas>
+      <div style="position:absolute;inset:0;border:3px solid #2DD4BF;border-radius:18px;pointer-events:none;"></div>
+      <button onclick="stopQRScan()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      <div style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:12px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.8);">Point at a FitShare QR code</div>
+    </div>
   </div>
 </div>
 
@@ -1758,6 +1766,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 // ==========================================
 // STATE
@@ -1826,14 +1835,14 @@ function showScreen(name) {
   if (name === 'home')        renderFeed();
   if (name === 'explore')     renderExplore();
   if (name === 'wardrobe')    renderWardrobe();
+  if (name !== 'qr' && _qrStream) stopQRScan();
   if (name === 'notifications') renderNotifications();
   if (name === 'friends')     { renderFriends(); loadFriends(); loadBorrowRequests(); }
   if (name === 'borrowed')    renderBorrowedTracker();
   if (name === 'calendar')    renderCalendar();
   if (name === 'messages')    renderInbox();
   if (name === 'settings')    renderThemeGrid();
-  if (name === 'editprofile') {
-    const editName = document.getElementById('edit-name');
+  if (name === 'editprofile') {    const editName = document.getElementById('edit-name');
     const editHandle = document.getElementById('edit-handle');
     if (editName) editName.value = userName || '';
     if (editHandle) editHandle.value = userHandle || '';
@@ -1889,7 +1898,7 @@ function renderFeed() {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>No items yet. Be the first to upload!</p></div>';
     return;
   }
-  grid.innerHTML = allItems.map(item => cardHTML(item, false)).join('');
+  grid.innerHTML = allItems.map(item => cardHTML(item, !item.isOther && myItems.some(i => i.localId === item.localId || i.id === item.id))).join('');
 }
 
 function renderExplore() {
@@ -1972,7 +1981,7 @@ function openItemDetail(id) {
   currentItem = getItemById(id);
   if (!currentItem) return;
   const item = currentItem;
-  const isOwn = myItems.includes(item);
+  const isOwn = item.isOther ? false : (myItems.some(i => i.localId === item.localId || i.id === item.id) || (item.user_id && item.user_id === currentSupaUser?.id));
   const thumbContent = item.imageData ? `<img src="${item.imageData}" alt="${item.title}">` : `<div style="font-size:80px;display:flex;align-items:center;justify-content:center;height:100%">${item.emoji||'\uD83D\uDC55'}</div>`;
 
   document.getElementById('item-detail-content').innerHTML = `
@@ -3015,10 +3024,11 @@ function copyInviteLink() {
 // ONBOARDING TOOLTIPS
 // ==========================================
 const ONBOARDING_STEPS = [
-  { target: 'nav-wardrobe', title: '👗 Add your clothes', body: 'Tap here to upload items from your wardrobe. Your friends can then request to borrow them!', pos: 'top' },
-  { target: 'nav-home',     title: '🏠 Your feed',       body: "Once you've added friends, you'll see their items here. Like things you'd love to borrow!", pos: 'top' },
-  { target: 'nav-explore',  title: '🔍 Explore',          body: 'Browse and filter all items from people on FitShare.', pos: 'top' },
-  { target: 'nav-settings', title: '👤 Your profile',     title: '⚙️ Settings & profile', body: 'Customise your profile, pick a theme, and manage your account here.', pos: 'top' },
+  { target: 'nav-home',     title: '👋 Welcome to FitShare!', body: "This is your feed — you'll see clothes from friends here once you've connected with people.", pos: 'top' },
+  { target: 'nav-explore',  title: '🔍 Explore styles',        body: 'Browse everything on FitShare. Filter by size or category to find pieces you love.', pos: 'top' },
+  { target: 'nav-wardrobe', title: '👗 Upload your clothes',   body: 'Tap + to add items from your wardrobe. Your friends can then request to borrow them!', pos: 'top' },
+  { target: 'home-friends-btn', title: '🤝 Add friends', body: 'Find friends by name or @handle, share your QR code, or send an invite link.', pos: 'bottom' },
+  { target: 'nav-settings', title: '⚙️ Your profile',          body: 'Set your name, handle, pick a theme, and customise your experience here.', pos: 'top' },
 ];
 let onboardingStep = 0;
 
@@ -3054,19 +3064,27 @@ function showOnboardingStep() {
   const tip = document.createElement('div');
   tip.id = 'ob-tip';
   tip.style.cssText = `position:fixed;z-index:9999;background:white;border-radius:18px;padding:18px 18px 14px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.25);`;
+  const dots = ONBOARDING_STEPS.map((_, i) =>
+    `<div style="width:6px;height:6px;border-radius:50%;background:${i===onboardingStep?'var(--black)':'var(--gray-300)'};"></div>`
+  ).join('');
+  const isNearBottom = rect.top > window.innerHeight * 0.6;
   tip.innerHTML = `
+    ${isNearBottom ? '' : `<div style="position:absolute;top:-8px;left:${Math.min(Math.max(rect.left+rect.width/2 - (Math.min(Math.max(rect.left+rect.width/2-130,8),window.innerWidth-276)),12),248)}px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:8px solid white;"></div>`}
     <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">${step.title}</div>
     <div style="font-size:13px;color:var(--gray-500);line-height:1.5;margin-bottom:14px;">${step.body}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:12px;color:var(--gray-400);">${onboardingStep+1} of ${ONBOARDING_STEPS.length}</div>
+      <div style="display:flex;gap:5px;align-items:center;">${dots}</div>
       <div style="display:flex;gap:8px;">
         <button onclick="skipOnboarding()" style="background:none;border:none;color:var(--gray-400);font-size:13px;cursor:pointer;padding:6px 10px;">Skip</button>
-        <button onclick="nextOnboardingStep()" style="background:var(--black);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">${onboardingStep < ONBOARDING_STEPS.length-1 ? 'Next →' : 'Done!'}</button>
+        <button onclick="nextOnboardingStep()" style="background:var(--black);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">${onboardingStep < ONBOARDING_STEPS.length-1 ? 'Next →' : 'Done! 🎉'}</button>
       </div>
-    </div>`;
-  // Position tooltip above or below target
-  const tipTop = rect.top > 200 ? rect.top - 160 : rect.bottom + 16;
-  tip.style.left = Math.min(Math.max(rect.left - 20, 8), window.innerWidth - 276) + 'px';
+    </div>
+    ${isNearBottom ? `<div style="position:absolute;bottom:-8px;left:${Math.min(Math.max(rect.left+rect.width/2-130,8),window.innerWidth-276) > 8 ? rect.left+rect.width/2 - Math.min(Math.max(rect.left+rect.width/2-130,8),window.innerWidth-276) : 12}px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid white;"></div>` : ''}`;
+  // Position tooltip: nav items are at bottom so show above; top bar items show below
+  const isNearBottom2 = rect.top > window.innerHeight * 0.6;
+  const tipTop = isNearBottom2 ? rect.top - 195 : rect.bottom + 16;
+  const tipLeft = Math.min(Math.max(rect.left + rect.width/2 - 130, 8), window.innerWidth - 276);
+  tip.style.left = tipLeft + 'px';
   tip.style.top = tipTop + 'px';
   document.body.appendChild(tip);
 }
@@ -4501,9 +4519,9 @@ function generateQRMatrix(data) {
 
 function copyProfileLink() {
   const handle = document.getElementById('qr-handle')?.textContent || '@user';
-  const link = `https://fitshare.app/u/${handle.replace('@','')}`;
+  const link = `${location.origin}${location.pathname}?invite=${handle.replace('@','')}`;
   navigator.clipboard?.writeText(link).catch(()=>{});
-  showToast('\uD83D\uDD17 Profile link copied!');
+  showToast('🔗 Profile link copied!');
 }
 
 function shareQR() {
@@ -4512,11 +4530,92 @@ function shareQR() {
   if (navigator.share) {
     navigator.share({
       title: 'FitShare - ' + name,
-      text: 'Check out my wardrobe on FitShare!',
-      url: 'https://fitshare.app/u/' + handle.replace('@','')
+      text: 'Check out my wardrobe on FitShare! Add me: ' + handle,
+      url: `${location.origin}${location.pathname}?invite=${handle.replace('@','')}`
     }).catch(() => {});
   } else {
     copyProfileLink();
   }
+}
+
+// ==========================================
+// QR SCANNER
+// ==========================================
+let _qrStream = null;
+let _qrAnimFrame = null;
+
+async function startQRScan() {
+  const wrap = document.getElementById('qr-scanner-wrap');
+  const video = document.getElementById('qr-video');
+  const btn = document.getElementById('qr-scan-btn');
+  try {
+    _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = _qrStream;
+    await video.play();
+    wrap.style.display = 'block';
+    btn.style.display = 'none';
+    _scanQRFrame();
+  } catch(e) {
+    showToast('📷 Camera access denied — check browser permissions');
+  }
+}
+
+function _scanQRFrame() {
+  const video = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-scan-canvas');
+  if (!video || !canvas || !_qrStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data) {
+      stopQRScan();
+      handleQRResult(code.data);
+      return;
+    }
+  }
+  _qrAnimFrame = requestAnimationFrame(_scanQRFrame);
+}
+
+function stopQRScan() {
+  if (_qrAnimFrame) cancelAnimationFrame(_qrAnimFrame);
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+  const wrap = document.getElementById('qr-scanner-wrap');
+  const btn = document.getElementById('qr-scan-btn');
+  if (wrap) wrap.style.display = 'none';
+  if (btn) btn.style.display = 'flex';
+}
+
+async function handleQRResult(data) {
+  // QR codes encode ?invite=handle or a profile URL
+  let handle = null;
+  try {
+    const url = new URL(data);
+    handle = url.searchParams.get('invite') || url.pathname.split('/').pop();
+  } catch {
+    // Maybe it's just a handle directly
+    handle = data.replace('@','').trim();
+  }
+  if (!handle) { showToast('❌ Unrecognised QR code'); return; }
+  // Search for this user in Supabase
+  const { data: profiles } = await _supaClient
+    .from('profiles')
+    .select('id, display_name, handle, avatar_color')
+    .ilike('handle', '%' + handle + '%')
+    .limit(1);
+  if (!profiles || profiles.length === 0) { showToast('❌ User not found'); return; }
+  const p = profiles[0];
+  if (p.id === currentSupaUser?.id) { showToast('That\'s your own code! 😄'); return; }
+  const name = p.display_name || p.handle || 'User';
+  // Already following?
+  const alreadyFollowing = friends.some(f => f.id === p.id);
+  if (alreadyFollowing) { showToast('✓ Already following ' + name); return; }
+  await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: p.id });
+  showToast('✓ Now following ' + name + '!');
+  await loadFriends();
+  loadOtherItems();
 }
 </script></body></html>
