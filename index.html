@@ -4791,43 +4791,32 @@ function showAuthError(screen, msg) {
       return;
     }
 
-    // Listen FIRST so OAuth redirects are caught before getSession
-    let sessionHandled = false;
+    // onAuthStateChange fires INITIAL_SESSION for both logged-in AND logged-out
+    // This is the single source of truth — no getSession race condition
     _supaClient.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-        if (!sessionHandled) {
-          sessionHandled = true;
+      if (event === 'INITIAL_SESSION') {
+        if (session?.user) {
+          currentSupaUser = session.user;
+          try { await loadProfile(session.user); } catch(e) { console.warn(e); }
+          enterApp();
+        } else {
+          showAuthScreen('login');
+        }
+      }
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Handles Google OAuth redirect back to app
+        if (!currentSupaUser) {
           currentSupaUser = session.user;
           try { await loadProfile(session.user); } catch(e) { console.warn(e); }
           enterApp();
         }
       }
       if (event === 'SIGNED_OUT') {
-        sessionHandled = false;
         currentSupaUser = null;
         currentProfile = null;
         showAuthScreen('login');
       }
     });
-
-    // Also check session directly (handles page refresh)
-    try {
-      const { data } = await _supaClient.auth.getSession();
-      if (data?.session?.user && !sessionHandled) {
-        sessionHandled = true;
-        currentSupaUser = data.session.user;
-        try { await loadProfile(data.session.user); } catch(e) { console.warn(e); }
-        enterApp();
-      } else if (!data?.session) {
-        // Only go to login if onAuthStateChange hasn't already handled it
-        setTimeout(() => {
-          if (!sessionHandled) showAuthScreen('login');
-        }, 500);
-      }
-    } catch(e) {
-      console.error('getSession failed:', e);
-      if (!sessionHandled) showAuthScreen('login');
-    }
   })();
 })();
 
