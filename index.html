@@ -716,6 +716,10 @@
       <button id="login-btn" onclick="doLogin()" style="width:100%;padding:16px;border-radius:14px;background:#2DD4BF;color:#111;font-size:16px;font-weight:700;border:none;cursor:pointer;margin-top:4px;transition:opacity 0.15s;">
         Log In
       </button>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;justify-content:center;">
+        <input type="checkbox" id="remember-me" checked style="width:16px;height:16px;accent-color:#2DD4BF;cursor:pointer;">
+        <span style="font-size:13px;color:#9ca3af;">Remember me</span>
+      </label>
 
       <div style="text-align:center;margin-top:4px;">
         <span style="font-size:13px;color:#6b7280;">Forgot password? </span>
@@ -1442,6 +1446,9 @@
       </div>
     </div>
     <div id="tab-borrow-requests" class="friends-section" style="display:none">
+      <div id="friend-requests-list"></div>
+      <div style="border-top:1px solid var(--gray-100);margin:8px 0 0;"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:14px 16px 8px;">Borrow Requests</div>
       <div id="borrow-requests-list"></div>
     </div>
   </div>
@@ -2084,7 +2091,9 @@ let currentCatFilter = 'All';
 let currentSizeFilter = 'All';
 
 // Real data only — no fake users
-let friends = [];     // loaded from Supabase (people this user follows)
+let friends = [];
+let sentRequests = [];  // outgoing follow requests
+let incomingRequests = []; // people who follow me but I don't follow back     // loaded from Supabase (people this user follows)
 
 
 const sampleItems = []; // real data only
@@ -3194,6 +3203,7 @@ function goToRequests() {
     ['my-friends','find-friends','borrow-requests'].forEach(t => {
       document.getElementById('tab-' + t).style.display = t === 'borrow-requests' ? 'block' : 'none';
     });
+    renderFriendRequests();
   }, 50);
 }
 function viewRequest(notifId) { goToRequests(); }
@@ -3208,18 +3218,53 @@ function viewRequest(notifId) { goToRequests(); }
 // Load people this user follows
 async function loadFriends() {
   if (!currentSupaUser) return;
-  const { data } = await _supaClient
+  const uid = currentSupaUser.id;
+
+  // Load who I follow
+  const { data: following } = await _supaClient
     .from('follows')
-    .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, avatar_color)')
-    .eq('follower_id', currentSupaUser.id);
-  if (data) {
-    friends = data.map(row => {
+    .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, avatar_color, avatar_url)')
+    .eq('follower_id', uid);
+
+  // Load who follows me
+  const { data: followers } = await _supaClient
+    .from('follows')
+    .select('follower_id, profiles!follows_follower_id_fkey(id, display_name, handle, avatar_color, avatar_url)')
+    .eq('following_id', uid);
+
+  const followingIds = new Set((following || []).map(r => r.following_id));
+  const followerIds  = new Set((followers  || []).map(r => r.follower_id));
+
+  // Mutual = friends
+  friends = (following || [])
+    .filter(r => followerIds.has(r.following_id))
+    .map(row => {
       const p = row.profiles || {};
       const name = p.display_name || p.handle || 'User';
-      return { id: p.id, name, handle: p.handle || '@user', avatar: name[0]?.toUpperCase() || 'U', color: p.avatar_color || '#2DD4BF' };
+      return { id: p.id, name, handle: p.handle || '@user', avatar: name[0]?.toUpperCase() || 'U', color: p.avatar_color || '#2DD4BF', avatarUrl: p.avatar_url };
     });
-    renderFriends();
-  }
+
+  // Outgoing = I follow them but they don't follow me back
+  sentRequests = (following || [])
+    .filter(r => !followerIds.has(r.following_id))
+    .map(row => {
+      const p = row.profiles || {};
+      const name = p.display_name || p.handle || 'User';
+      return { id: p.id, name, handle: p.handle || '@user', avatar: name[0]?.toUpperCase() || 'U', color: p.avatar_color || '#2DD4BF', avatarUrl: p.avatar_url };
+    });
+
+  // Incoming = they follow me but I don't follow them back
+  incomingRequests = (followers || [])
+    .filter(r => !followingIds.has(r.follower_id))
+    .map(row => {
+      const p = row.profiles || {};
+      const name = p.display_name || p.handle || 'User';
+      return { id: p.id, name, handle: p.handle || '@user', avatar: name[0]?.toUpperCase() || 'U', color: p.avatar_color || '#2DD4BF', avatarUrl: p.avatar_url };
+    });
+
+  renderFriends();
+  renderFriendRequests();
+  updateFriendRequestBadge();
 }
 
 // Load borrow requests from Supabase
@@ -3418,6 +3463,96 @@ async function toggleFollow(userId, name, btn) {
   document.getElementById('my-friends-count').textContent = friends.length;
 }
 
+function updateFriendRequestBadge() {
+  const total = incomingRequests.length;
+  const badge = document.getElementById('freq-badge');
+  if (badge) {
+    badge.textContent = total;
+    badge.style.display = total > 0 ? 'inline' : 'none';
+  }
+}
+
+function renderFriendRequests() {
+  const el = document.getElementById('friend-requests-list');
+  if (!el) return;
+
+  let html = '';
+
+  // --- INCOMING ---
+  if (incomingRequests.length > 0) {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:14px 16px 8px;">Incoming (${incomingRequests.length})</div>`;
+    html += incomingRequests.map(p => {
+      const avatarContent = p.avatarUrl
+        ? `<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : p.avatar;
+      return `<div class="friend-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
+        <div class="notif-avatar" style="background:${p.color};overflow:hidden;padding:0;">${avatarContent}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+          <div style="font-size:12px;color:var(--gray-500);">${p.handle}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="acceptFriendRequest('${p.id}')" title="Accept" style="width:38px;height:38px;border-radius:50%;border:none;background:#22c55e;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button onclick="declineFriendRequest('${p.id}')" title="Decline" style="width:38px;height:38px;border-radius:50%;border:none;background:#ef4444;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity 0.15s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // --- OUTGOING ---
+  if (sentRequests.length > 0) {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:14px 16px 8px;border-top:${incomingRequests.length>0?'1px solid var(--gray-100)':'none'};">Sent (${sentRequests.length})</div>`;
+    html += sentRequests.map(p => {
+      const avatarContent = p.avatarUrl
+        ? `<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : p.avatar;
+      return `<div class="friend-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
+        <div class="notif-avatar" style="background:${p.color};overflow:hidden;padding:0;">${avatarContent}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+          <div style="font-size:12px;color:var(--gray-500);">${p.handle}</div>
+        </div>
+        <button onclick="cancelFriendRequest('${p.id}', '${p.name}')" style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--gray-300);background:transparent;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
+      </div>`;
+    }).join('');
+  }
+
+  if (!incomingRequests.length && !sentRequests.length) {
+    html = `<div style="text-align:center;padding:48px 20px;">
+      <div style="font-size:40px;margin-bottom:10px;">👥</div>
+      <div style="font-size:14px;font-weight:700;color:var(--black);margin-bottom:4px;">No pending requests</div>
+      <div style="font-size:12px;color:var(--gray-500);">Friend requests you send or receive will appear here.</div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+async function acceptFriendRequest(userId) {
+  await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: userId });
+  showToast('✓ Friend added!');
+  await loadFriends();
+  loadOtherItems();
+}
+
+async function declineFriendRequest(userId) {
+  // Delete their follow of me
+  await _supaClient.from('follows').delete().eq('follower_id', userId).eq('following_id', currentSupaUser.id);
+  showToast('Request declined');
+  await loadFriends();
+}
+
+async function cancelFriendRequest(userId) {
+  await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
+  sentRequests = sentRequests.filter(r => r.id !== userId);
+  showToast('Request cancelled');
+  await loadFriends();
+}
+
 async function unfollowFriend(userId, btn) {
   await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
   friends = friends.filter(f => f.id !== userId);
@@ -3428,8 +3563,8 @@ async function unfollowFriend(userId, btn) {
 
 function renderBorrowRequests() {
   const pending = borrowRequests.filter(r => r.status === 'pending');
-  document.getElementById('req-badge').textContent = pending.length;
-  document.getElementById('req-badge').style.display = pending.length ? 'inline' : 'none';
+  document.getElementById('freq-badge').textContent = pending.length;
+  document.getElementById('freq-badge').style.display = pending.length ? 'inline' : 'none';
   updateNotifBells();
   document.getElementById('borrow-requests-list').innerHTML = pending.length ? pending.map(r => `
     <div class="breq-card" id="breq-${r.id}">
@@ -3583,6 +3718,7 @@ function showFTab(tab, el) {
   ['my-friends','find-friends','borrow-requests'].forEach(t => {
     document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
+  if (tab === 'borrow-requests') renderFriendRequests();
 }
 
 // ==========================================
@@ -4024,6 +4160,9 @@ function applyTheme(id) {
     root.style.setProperty('--btn-secondary-text', text);
     root.style.setProperty('--border-color', theme.css?.['--gray-200'] || '#2a2a2a');
     root.style.setProperty('--shadow', 'rgba(0,0,0,0.3)');
+    root.style.setProperty('--photo-upload-icon', '#888888');
+  } else {
+    root.style.removeProperty('--photo-upload-icon');
   }
 
   const bg = theme.css?.['--bg'] || '#fff';
@@ -5663,6 +5802,11 @@ async function doLogin() {
   }
 
   _loginAttempts.count = 0;
+  // Handle "remember me" — if unchecked, sign out when tab closes
+  const rememberMe = document.getElementById('remember-me')?.checked !== false;
+  if (!rememberMe) {
+    window._signOutOnClose = true;
+  }
   appEntered = true;
   currentSupaUser = data.user;
   await loadProfile(data.user);
@@ -5872,6 +6016,11 @@ function showAuthError(screen, msg) {
     // - SIGNED_IN fires after Google OAuth completes (may come after INITIAL_SESSION null)
     // - SIGNED_OUT always goes to login
     let initialSessionHandled = false;
+
+    // Sign out on tab close if "remember me" was unchecked
+    window.addEventListener('pagehide', () => {
+      if (window._signOutOnClose) _supaClient.auth.signOut();
+    });
 
     _supaClient.auth.onAuthStateChange(async (event, session) => {
       console.log('[AUTH]', event, session?.user?.email || 'no session', 'appEntered:', appEntered);
