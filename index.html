@@ -4070,7 +4070,10 @@ function showAuthError(screen, msg) {
 
   script.onload = async function() {
     try {
-      supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+      // The UMD exports createClient globally (not window.supabase)
+      const _sdk = window.supabase || (typeof createClient !== 'undefined' ? {createClient} : null);
+      if (!_sdk) throw new Error('Supabase SDK not found on window');
+      supabase = _sdk.createClient(SUPA_URL, SUPA_KEY);
     } catch(e) {
       clearTimeout(hardFallback);
       console.error('Supabase init failed:', e);
