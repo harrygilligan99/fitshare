@@ -1772,6 +1772,7 @@ const sampleItems = [
 ];
 
 let myItems = [];
+let otherItems = []; // real items from other users in Supabase
 let borrowRequests = [
   { id: 1, from: 'Emma', fromAvatar: 'E', fromColor: '#f472b6', item: 'My Blue Hoodie', fromDate: '2026-03-15', toDate: '2026-03-20', message: 'Hey! Love this, can I borrow for a party?', status: 'pending' },
   { id: 2, from: 'Jake', fromAvatar: 'J', fromColor: '#60a5fa', item: 'Striped Tee', fromDate: '2026-03-18', toDate: '2026-03-22', message: '', status: 'pending' },
@@ -1830,6 +1831,16 @@ function showScreen(name) {
   if (name === 'calendar')    renderCalendar();
   if (name === 'messages')    renderInbox();
   if (name === 'settings')    renderThemeGrid();
+  if (name === 'editprofile') {
+    const editName = document.getElementById('edit-name');
+    const editHandle = document.getElementById('edit-handle');
+    if (editName) editName.value = userName || '';
+    if (editHandle) editHandle.value = userHandle || '';
+    const preview = document.getElementById('name-preview');
+    if (preview) preview.textContent = userName || '';
+    const avatarPrev = document.getElementById('edit-avatar-preview');
+    if (avatarPrev) avatarPrev.textContent = (userName||'u')[0].toLowerCase();
+  }
 
   window.scrollTo(0, 0);
 }
@@ -1871,7 +1882,8 @@ function goBack() {
 // ==========================================
 function renderFeed() {
   const grid = document.getElementById('feed-grid');
-  const allItems = [...sampleItems, ...myItems.map(i => ({...i, owner: 'harry', ownerAvatar: 'h', ownerColor: '#2DD4BF'}))];
+  const friendPool = otherItems.length > 0 ? otherItems : sampleItems;
+  const allItems = [...friendPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
   if (allItems.length === 0) {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>No items yet. Be the first to upload!</p></div>';
     return;
@@ -1880,7 +1892,8 @@ function renderFeed() {
 }
 
 function renderExplore() {
-  const allItems = [...sampleItems, ...myItems.map(i => ({...i, owner: 'harry', ownerAvatar: 'h', ownerColor: '#2DD4BF'}))];
+  const friendPool = otherItems.length > 0 ? otherItems : sampleItems;
+  const allItems = [...friendPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
   const filtered = allItems.filter(item => {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
@@ -1923,7 +1936,8 @@ function cardHTML(item, isOwn) {
 }
 
 function filterExplore(q) {
-  const allItems = [...sampleItems, ...myItems.map(i => ({...i, owner:'harry',ownerAvatar:'h',ownerColor:'#2DD4BF'}))];
+  const friendPool = otherItems.length > 0 ? otherItems : sampleItems;
+  const allItems = [...friendPool, ...myItems.map(i => ({...i, owner:userName||'me',ownerAvatar:(userName||'h')[0].toLowerCase(),ownerColor:'#2DD4BF'}))];
   const filtered = allItems.filter(item => {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
@@ -1950,7 +1964,7 @@ function setSizeFilter(size, el) {
 // ITEM DETAIL
 // ==========================================
 function getItemById(id) {
-  return sampleItems.find(i => i.id === id) || myItems.find(i => i.localId === id);
+  return sampleItems.find(i => i.id === id) || myItems.find(i => i.localId === id) || otherItems.find(i => i.id === id);
 }
 
 function openItemDetail(id) {
@@ -2207,7 +2221,7 @@ function renderNotifications() {
     <div class="notif-item ${n.unread?'unread':''}" id="notif-${n.id}">
       <div class="notif-avatar" style="background:${esc(n.color)}">${esc(n.avatar)}</div>
       <div class="notif-body">
-        <p>${esc(n.text)}</p>
+        <p>${n.text}</p>
         ${n.sub ? `<div style="font-size:12px;color:var(--gray-500);margin-top:1px;">${n.sub}</div>` : ''}
         <div class="notif-time">${n.time}</div>
         ${n.type === 'request' ? `
@@ -3571,6 +3585,7 @@ const FREE_THEMES = ['default','dark','mint']; // 3 free themes
 let userEmoji = '';
 let userNameColour = '#111111';
 let userName = 'harry';
+let userHandle = '@user';
 const MAX_PHOTOS_FREE = 1;
 const MAX_PHOTOS_PRO = 5;
 
@@ -3622,19 +3637,25 @@ function previewName() {
 }
 
 function saveProfile() {
-  userName = document.getElementById('edit-name')?.value || userName;
-  const handle = document.getElementById('edit-handle')?.value || '@user';
+  userName = document.getElementById('edit-name')?.value.trim() || userName;
+  userHandle = document.getElementById('edit-handle')?.value.trim() || userHandle;
+  if (!userHandle.startsWith('@')) userHandle = '@' + userHandle;
   if (isPro) {
     userEmoji = selectedEmoji;
     userNameColour = selectedColour;
   }
-  // Update avatar
+  // Update avatar initials everywhere
   const initial = userName[0]?.toLowerCase() || 'h';
   document.querySelectorAll('.avatar-lg').forEach(a => { if(a.textContent.length <= 2) a.textContent = initial; });
   document.getElementById('settings-name').textContent = userName + (userEmoji ? ' '+userEmoji : '');
+  // Update wardrobe profile header
+  const wProfileName = document.querySelector('#screen-wardrobe .profile-info h3');
+  if (wProfileName) wProfileName.textContent = userName;
+  const wHandle = document.querySelector('#screen-wardrobe .handle');
+  if (wHandle) wHandle.textContent = userHandle;
   // Save to Supabase
-  saveProfileToSupabase(userName, handle);
-  showToast('Profile saved \u2713');
+  saveProfileToSupabase(userName, userHandle);
+  showToast('Profile saved ✓');
   goBack();
 }
 
@@ -3791,6 +3812,7 @@ function applyProfileToUI(profile) {
 
   // Update all name/handle/avatar spots
   userName = name;
+  userHandle = handle;
   document.querySelectorAll('.avatar-lg').forEach(a => { if (a.textContent.length <= 2) a.textContent = initial; });
   const settingsName = document.getElementById('settings-name');
   if (settingsName) settingsName.textContent = name + (userEmoji ? ' ' + userEmoji : '');
@@ -3836,9 +3858,47 @@ async function loadMyItems() {
   }
 }
 
+// == LOAD OTHER USERS' ITEMS FOR THE FEED ==
+async function loadOtherItems() {
+  if (!currentSupaUser) return;
+  const { data, error } = await _supaClient
+    .from('items')
+    .select('*, profiles(display_name, handle, avatar_color)')
+    .neq('user_id', currentSupaUser.id)
+    .order('created_at', { ascending: false })
+    .limit(60);
+
+  if (data) {
+    otherItems = data.map(row => {
+      const profile = row.profiles || {};
+      const name = profile.display_name || 'User';
+      return {
+        id: row.id,
+        localId: row.id,
+        title: row.title,
+        category: row.category || 'Top',
+        size: row.size || 'M',
+        desc: row.description || '',
+        imageData: row.image_url || null,
+        emoji: row.emoji || '\uD83D\uDC55',
+        owner: name,
+        ownerAvatar: name[0]?.toUpperCase() || 'U',
+        ownerColor: profile.avatar_color || '#2DD4BF',
+        ownerHandle: profile.handle || '@user',
+        likes: 0, liked: false, requested: false,
+        affiliate: null,
+        isOther: true
+      };
+    });
+    renderFeed();
+    renderExplore();
+  }
+}
+
 // == ENTER APP after successful auth ==
 async function enterApp() {
   await loadMyItems();
+  loadOtherItems(); // non-blocking, updates feed when ready
 
   // Show bottom nav now that user is authenticated
   document.getElementById('bottom-nav').style.display = 'flex';
@@ -4002,6 +4062,7 @@ async function doLogout() {
   currentSupaUser = null;
   currentProfile = null;
   myItems = [];
+  otherItems = [];
   showAuthScreen('login');
   showToast('Logged out');
 }
