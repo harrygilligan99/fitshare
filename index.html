@@ -1169,6 +1169,13 @@
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
+    <div class="settings-row" onclick="openChangePassword()">
+      <div class="settings-row-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+        <span>Change Password</span>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
     <div class="settings-row" onclick="window.location.href='mailto:help@fitshare.co.uk?subject=FitShare Support'">
       <div class="settings-row-left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
@@ -2275,11 +2282,12 @@ async function searchPeople(q) {
   const search = q.trim().toLowerCase().replace(/^@/,'');
   const [pnr, phr] = await Promise.all([
     _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
-      .neq('id', currentSupaUser?.id||'').ilike('display_name',`%${search}%`).limit(15),
+      .ilike('display_name',`%${search}%`).limit(15),
     _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
-      .neq('id', currentSupaUser?.id||'').ilike('handle',`%${search}%`).limit(15)
+      .ilike('handle',`%${search}%`).limit(15)
   ]);
-  const _seen = new Set();
+  console.log('[PEOPLE SEARCH] q:', search, 'name:', pnr.data?.length, pnr.error?.message, 'handle:', phr.data?.length, phr.error?.message);
+  const _seen = new Set([currentSupaUser?.id||'']);
   const results = [...(pnr.data||[]),...(phr.data||[])].filter(p => {
     if (_seen.has(p.id)) return false; _seen.add(p.id); return true;
   });
@@ -3271,6 +3279,7 @@ function renderFriends() {
 }
 
 let _searchDebounce = null;
+let appEntered = false; // tracks whether we've entered the app (prevents double-entry)
 
 // Levenshtein distance for fuzzy matching
 function levenshtein(a, b) {
@@ -3326,20 +3335,19 @@ async function searchFriends() {
   _searchDebounce = setTimeout(async () => {
     const qClean = q.replace(/^@/,'').trim();
 
-    // Run two queries in parallel: one for display_name, one for handle
+    // Two parallel queries — avoids complex .or() syntax issues in Supabase JS
     const [nameRes, handleRes] = await Promise.all([
       _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
-        .neq('id', currentSupaUser?.id || '')
         .ilike('display_name', `%${qClean}%`)
         .limit(20),
       _supaClient.from('profiles').select('id,display_name,handle,avatar_color,avatar_url')
-        .neq('id', currentSupaUser?.id || '')
         .ilike('handle', `%${qClean}%`)
         .limit(20)
     ]);
+    console.log('[SEARCH] q:', qClean, 'name results:', nameRes.data?.length, nameRes.error?.message, 'handle results:', handleRes.data?.length, handleRes.error?.message);
 
-    // Merge + deduplicate by id
-    const seen = new Set();
+    // Merge + deduplicate, exclude self
+    const seen = new Set([currentSupaUser?.id || '']);
     const merged = [...(nameRes.data||[]), ...(handleRes.data||[])].filter(p => {
       if (seen.has(p.id)) return false;
       seen.add(p.id);
@@ -4991,19 +4999,22 @@ function cancelCrop() {
 }
 
 function confirmCrop() {
-  // Export at 400x400 — scale from CROP_SIZE (300) preview
+  // Export circle crop at 400x400
+  // _cropX/_cropY = top-left of image on the 300px preview canvas
+  // _cropScale = current scale of image
+  // To sample the circle centre: source pixel = (CROP_SIZE/2 - _cropX) / _cropScale, same for Y
   const out = document.createElement('canvas');
   out.width = 400; out.height = 400;
   const ctx = out.getContext('2d');
   ctx.beginPath();
   ctx.arc(200, 200, 200, 0, Math.PI * 2);
   ctx.clip();
-  const ratio = 400 / CROP_SIZE;
-  ctx.drawImage(_cropImg, _cropX * ratio, _cropY * ratio, _cropImg.width * _cropScale * ratio, _cropImg.height * _cropScale * ratio);
+  // Source coords: the top-left of the crop circle in image-pixel space
+  const srcX = -_cropX / _cropScale;
+  const srcY = -_cropY / _cropScale;
+  const srcSize = CROP_SIZE / _cropScale;
+  ctx.drawImage(_cropImg, srcX, srcY, srcSize, srcSize, 0, 0, 400, 400);
   const dataUrl = out.toDataURL('image/jpeg', 0.88);
-  _pendingAvatarImage = dataUrl;
-
-  _pendingAvatarImage = dataUrl;
   document.getElementById('avatar-crop-modal').style.display = 'none';
   _cropImg = null;
   // Show immediately in edit preview
@@ -5493,15 +5504,11 @@ async function doLogin() {
     return;
   }
 
-  _loginAttempts.count = 0; // reset on success
+  _loginAttempts.count = 0;
+  appEntered = true; // block onAuthStateChange SIGNED_IN from double-entering
   currentSupaUser = data.user;
-  // Don't call enterApp() directly — let onAuthStateChange SIGNED_IN handle it
-  // This avoids double-enter race condition with Google OAuth flow
-  // But in case SIGNED_IN already fired before we get here, enter now
-  if (!currentScreen || currentScreen === 'login' || currentScreen === 'signup') {
-    await loadProfile(data.user);
-    enterApp();
-  }
+  await loadProfile(data.user);
+  enterApp();
 }
 
 // == SIGN UP ==
@@ -5706,7 +5713,6 @@ function showAuthError(screen, msg) {
     // - INITIAL_SESSION fires first; if no session, wait briefly for SIGNED_IN (Google OAuth redirect)
     // - SIGNED_IN fires after Google OAuth completes (may come after INITIAL_SESSION null)
     // - SIGNED_OUT always goes to login
-    let appEntered = false;
     let initialSessionHandled = false;
 
     async function handleSession(user) {
@@ -5737,7 +5743,7 @@ function showAuthError(screen, msg) {
         await handleSession(session.user);
       }
       if (event === 'SIGNED_OUT') {
-        appEntered = false;
+        appEntered = false; // allow re-entry next login
         currentSupaUser = null;
         currentProfile = null;
         showAuthScreen('login');
@@ -5993,6 +5999,42 @@ async function handleQRResult(data) {
   await loadFriends();
   loadOtherItems();
 }
+
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
+function openChangePassword() {
+  const modal = document.getElementById('change-password-modal');
+  modal.style.display = 'flex';
+  document.getElementById('pw-step-1').style.display = 'block';
+  document.getElementById('pw-step-confirm').style.display = 'none';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-error').style.display = 'none';
+}
+function closeChangePassword() {
+  document.getElementById('change-password-modal').style.display = 'none';
+}
+function submitChangePassword() {
+  const p1 = document.getElementById('pw-new').value;
+  const p2 = document.getElementById('pw-confirm').value;
+  const errEl = document.getElementById('pw-error');
+  errEl.style.display = 'none';
+  if (!p1 || p1.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; errEl.style.display = 'block'; return; }
+  if (!/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)) { errEl.textContent = 'Must contain letters and at least one number'; errEl.style.display = 'block'; return; }
+  if (p1 !== p2) { errEl.textContent = "Passwords don't match"; errEl.style.display = 'block'; return; }
+  // Show confirm step
+  document.getElementById('pw-step-1').style.display = 'none';
+  document.getElementById('pw-step-confirm').style.display = 'block';
+}
+async function confirmChangePassword() {
+  const p1 = document.getElementById('pw-new').value;
+  const { error } = await _supaClient.auth.updateUser({ password: p1 });
+  closeChangePassword();
+  if (error) { showToast('Error: ' + error.message); }
+  else { showToast('✓ Password changed successfully'); }
+}
+
 </script>
 <!-- ========== AVATAR CROP MODAL ========== -->
 <div id="avatar-crop-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);flex-direction:column;align-items:center;justify-content:center;">
@@ -6024,4 +6066,32 @@ async function handleQRResult(data) {
     <button onclick="confirmCrop()" style="flex:1;padding:14px;border-radius:14px;border:none;background:white;color:black;font-size:14px;font-weight:700;cursor:pointer;">Use Photo</button>
   </div>
 </div>
+
+<!-- ===== CHANGE PASSWORD MODAL ===== -->
+<div id="change-password-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--white);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:28px 20px 40px;animation:slideUp 0.25s ease;">
+    <div style="width:36px;height:4px;background:var(--gray-200);border-radius:2px;margin:0 auto 20px;"></div>
+    <h3 style="font-size:18px;font-weight:800;color:var(--black);margin-bottom:6px;">Change Password</h3>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">Enter your new password below. You'll stay logged in.</p>
+    <div id="pw-step-1">
+      <input type="password" id="pw-new" placeholder="New password (min 8 chars)" autocomplete="new-password"
+        style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--gray-200);background:var(--gray-50);color:var(--black);font-size:15px;outline:none;box-sizing:border-box;margin-bottom:10px;"
+        onfocus="this.style.borderColor='#2DD4BF'" onblur="this.style.borderColor='var(--gray-200)'">
+      <input type="password" id="pw-confirm" placeholder="Confirm new password" autocomplete="new-password"
+        style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--gray-200);background:var(--gray-50);color:var(--black);font-size:15px;outline:none;box-sizing:border-box;margin-bottom:6px;"
+        onfocus="this.style.borderColor='#2DD4BF'" onblur="this.style.borderColor='var(--gray-200)'">
+      <div id="pw-error" style="font-size:13px;color:#ef4444;margin-bottom:12px;display:none;"></div>
+      <button onclick="submitChangePassword()" style="width:100%;padding:15px;border-radius:12px;background:var(--black);color:white;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px;">Change Password</button>
+      <button onclick="closeChangePassword()" style="width:100%;padding:15px;border-radius:12px;background:var(--gray-100);color:var(--gray-700);font-size:15px;font-weight:600;border:none;cursor:pointer;">Cancel</button>
+    </div>
+    <div id="pw-step-confirm" style="display:none;text-align:center;padding:10px 0;">
+      <div style="font-size:40px;margin-bottom:12px;">🔐</div>
+      <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">Are you sure?</div>
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">This will update your password immediately.</div>
+      <button onclick="confirmChangePassword()" style="width:100%;padding:15px;border-radius:12px;background:#ef4444;color:white;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px;">Yes, change it</button>
+      <button onclick="document.getElementById('pw-step-confirm').style.display='none';document.getElementById('pw-step-1').style.display='block';" style="width:100%;padding:15px;border-radius:12px;background:var(--gray-100);color:var(--gray-700);font-size:15px;font-weight:600;border:none;cursor:pointer;">Go back</button>
+    </div>
+  </div>
+</div>
+
 </body></html>
