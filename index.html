@@ -3736,7 +3736,7 @@ function showAuthScreen(which) {
 }
 
 // == SAVE PROFILE TO DB (called after confirmed session exists) ==
-async function async function saveProfileToDB(user, name, handle, email) {
+async function saveProfileToDB(user, name, handle, email) {
   try {
     await _supaClient.from('profiles').upsert({
       id: user.id,
@@ -3811,7 +3811,7 @@ function applyProfileToUI(profile) {
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
-async async function loadMyItems() {
+async function loadMyItems() {
   if (!currentSupaUser) return;
   const { data, error } = await _supaClient
     .from('items')
@@ -3837,7 +3837,7 @@ async async function loadMyItems() {
 }
 
 // == ENTER APP after successful auth ==
-async async function enterApp() {
+async function enterApp() {
   await loadMyItems();
 
   // Show bottom nav now that user is authenticated
