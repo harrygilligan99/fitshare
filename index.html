@@ -4805,20 +4805,28 @@ async function activatePro() {
     setTimeout(() => goBack(), 400);
     return;
   }
-  // Live Stripe Checkout
+  // Live Stripe Checkout — requires api/create-checkout.js deployed on Vercel
+  // If that's not deployed yet, set STRIPE_PAYMENT_LINK below as a fallback
+  const STRIPE_PAYMENT_LINK = ''; // paste your Stripe payment link here as backup e.g. 'https://buy.stripe.com/xxxxx'
+
   try {
-    showToast('Opening checkout\u2026');
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentSupaUser.id, email: currentSupaUser.email })
     });
+    if (!res.ok) throw new Error('API returned ' + res.status);
     const json = await res.json();
-    if (json.error) { showToast('Error: ' + json.error); return; }
+    if (json.error) throw new Error(json.error);
     window.location.href = json.url;
   } catch(e) {
-    showToast('Could not open checkout \u2014 try again');
     console.error('activatePro error:', e);
+    // Fallback to payment link if API not deployed yet
+    if (STRIPE_PAYMENT_LINK) {
+      window.location.href = STRIPE_PAYMENT_LINK + '?client_reference_id=' + currentSupaUser.id;
+    } else {
+      showToast('Checkout unavailable — make sure api/create-checkout.js is deployed on Vercel');
+    }
   }
 }
 
@@ -5781,35 +5789,36 @@ function showAuthError(screen, msg) {
     // - SIGNED_OUT always goes to login
     let initialSessionHandled = false;
 
-    async function handleSession(user) {
-      if (appEntered) return;
-      appEntered = true;
-      currentSupaUser = user;
-      try { await loadProfile(user); } catch(e) { console.warn(e); }
-      // Only enter app if not already inside it (email login may have already called enterApp)
-      const onAuthScreen = document.getElementById('screen-auth')?.classList.contains('active') ||
-                           document.getElementById('screen-splash')?.classList.contains('active');
-      if (onAuthScreen) enterApp();
-    }
-
     _supaClient.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AUTH]', event, session?.user?.email || 'no user', 'appEntered:', appEntered);
+      console.log('[AUTH]', event, session?.user?.email || 'no session', 'appEntered:', appEntered);
+
       if (event === 'INITIAL_SESSION') {
-        initialSessionHandled = true;
         if (session?.user) {
-          await handleSession(session.user);
+          // Returning user with existing session — auto login
+          if (!appEntered) {
+            appEntered = true;
+            currentSupaUser = session.user;
+            try { await loadProfile(session.user); } catch(e) { console.warn('[AUTH] loadProfile error:', e); }
+            enterApp();
+          }
         } else {
-          setTimeout(() => {
-            console.log('[AUTH] timeout fired, appEntered:', appEntered);
-            if (!appEntered) showAuthScreen('login');
-          }, 800);
+          // No session — show login after brief wait (Google OAuth may still be arriving)
+          setTimeout(() => { if (!appEntered) showAuthScreen('login'); }, 600);
         }
       }
+
       if (event === 'SIGNED_IN' && session?.user) {
-        await handleSession(session.user);
+        // Only handle Google OAuth here — email/password sets appEntered before calling enterApp
+        if (!appEntered) {
+          appEntered = true;
+          currentSupaUser = session.user;
+          try { await loadProfile(session.user); } catch(e) { console.warn('[AUTH] loadProfile error:', e); }
+          enterApp();
+        }
       }
+
       if (event === 'SIGNED_OUT') {
-        appEntered = false; // allow re-entry next login
+        appEntered = false;
         currentSupaUser = null;
         currentProfile = null;
         showAuthScreen('login');
