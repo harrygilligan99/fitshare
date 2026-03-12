@@ -1147,10 +1147,10 @@
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
-    <div class="settings-row" id="settings-groups-row" style="display:none;" onclick="openManageGroups()">
+    <div class="settings-row" id="settings-groups-row" onclick="openManageGroups()">
       <div class="settings-row-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path><circle cx="19" cy="7" r="3"></circle></svg>
-        <span>Visibility Groups <span style="font-size:10px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle;">✦ Plus</span></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+        <span>My Groups <span style="font-size:10px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle;">✦ Plus</span></span>
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
@@ -1293,19 +1293,28 @@
   </div>
   <div class="scroll-content" style="padding:20px 16px 100px;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;">
-      <div class="avatar-lg" id="edit-avatar-preview" style="font-size:28px;width:72px;height:72px;cursor:pointer;" onclick="toggleAvatarColourPicker()">h</div>
-      <div style="font-size:13px;color:var(--teal-dark);font-weight:600;cursor:pointer;margin-top:4px;" onclick="toggleAvatarColourPicker()">Change colour</div>
-      <div id="avatar-colour-picker" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;padding:12px;background:var(--gray-50);border-radius:12px;">
-        <div onclick="setAvatarColour('#2DD4BF',this)" style="width:32px;height:32px;border-radius:50%;background:#2DD4BF;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#f43f5e',this)" style="width:32px;height:32px;border-radius:50%;background:#f43f5e;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#a855f7',this)" style="width:32px;height:32px;border-radius:50%;background:#a855f7;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#3b82f6',this)" style="width:32px;height:32px;border-radius:50%;background:#3b82f6;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#f59e0b',this)" style="width:32px;height:32px;border-radius:50%;background:#f59e0b;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#10b981',this)" style="width:32px;height:32px;border-radius:50%;background:#10b981;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#ec4899',this)" style="width:32px;height:32px;border-radius:50%;background:#ec4899;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#6366f1',this)" style="width:32px;height:32px;border-radius:50%;background:#6366f1;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#111111',this)" style="width:32px;height:32px;border-radius:50%;background:#111111;cursor:pointer;border:2px solid transparent;"></div>
-        <div onclick="setAvatarColour('#f97316',this)" style="width:32px;height:32px;border-radius:50%;background:#f97316;cursor:pointer;border:2px solid transparent;"></div>
+      <!-- Avatar — shows uploaded photo or colour initial -->
+      <div id="edit-avatar-preview" onclick="triggerAvatarUpload()" style="width:80px;height:80px;border-radius:50%;background:#2DD4BF;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:white;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;">
+        <span id="edit-avatar-initial">h</span>
+        <img id="edit-avatar-img" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" id="avatar-overlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="width:24px;height:24px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </div>
+      </div>
+      <input type="file" id="avatar-upload-input" accept="image/*" style="display:none;" onchange="handleAvatarUpload(this)">
+      <div style="font-size:13px;color:var(--teal-dark);font-weight:600;cursor:pointer;margin-top:6px;" onclick="triggerAvatarUpload()">Change photo</div>
+      <!-- Colour swatches — shown below if no photo uploaded -->
+      <div id="avatar-colour-picker" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;padding:10px 12px;background:var(--gray-50);border-radius:12px;max-width:220px;">
+        <div onclick="setAvatarColour('#2DD4BF',this)" style="width:28px;height:28px;border-radius:50%;background:#2DD4BF;cursor:pointer;outline:3px solid var(--black);outline-offset:2px;"></div>
+        <div onclick="setAvatarColour('#f43f5e',this)" style="width:28px;height:28px;border-radius:50%;background:#f43f5e;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#a855f7',this)" style="width:28px;height:28px;border-radius:50%;background:#a855f7;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#3b82f6',this)" style="width:28px;height:28px;border-radius:50%;background:#3b82f6;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#f59e0b',this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#10b981',this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#ec4899',this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#6366f1',this)" style="width:28px;height:28px;border-radius:50%;background:#6366f1;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#111111',this)" style="width:28px;height:28px;border-radius:50%;background:#111111;cursor:pointer;outline:none;"></div>
+        <div onclick="setAvatarColour('#f97316',this)" style="width:28px;height:28px;border-radius:50%;background:#f97316;cursor:pointer;outline:none;"></div>
       </div>
     </div>
 
@@ -1833,15 +1842,17 @@
         <div style="font-size:18px;">👥</div>
         <div style="font-size:11px;font-weight:600;margin-top:2px;">Friends</div>
       </label>
-      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-group-lbl" onclick="onVisClick('group')">
-        <input type="radio" name="item-visibility" value="group" style="display:none;" id="vis-group">
-        <div style="font-size:18px;">🫂</div>
-        <div style="font-size:10px;font-weight:600;margin-top:2px;">Group <span style="font-size:9px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 4px;border-radius:6px;vertical-align:middle;">✦</span></div>
-      </label>
       <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-private-lbl" onclick="onVisClick('private')">
         <input type="radio" name="item-visibility" value="private" style="display:none;" id="vis-private">
         <div style="font-size:18px;">🔒</div>
         <div style="font-size:11px;font-weight:600;margin-top:2px;">Private</div>
+      </label>
+      <label style="flex:1;border:1.5px dashed var(--gray-300);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;position:relative;" id="vis-group-lbl" onclick="onVisClick('group')">
+        <input type="radio" name="item-visibility" value="group" style="display:none;" id="vis-group">
+        <div style="font-size:18px;position:relative;display:inline-block;">
+          🫂<span style="position:absolute;top:-4px;right:-8px;width:14px;height:14px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:900;line-height:1;">+</span>
+        </div>
+        <div style="font-size:10px;font-weight:600;margin-top:4px;color:var(--gray-500);">Group</div>
       </label>
     </div>
     <!-- Group picker for Plus members -->
@@ -3245,6 +3256,38 @@ function renderFriends() {
   renderBorrowRequests();
 }
 
+let _searchDebounce = null;
+
+// Levenshtein distance for fuzzy matching
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => [i, ...Array(n).fill(0)]);
+  for (let j=0;j<=n;j++) dp[0][j] = j;
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function scorePerson(p, q) {
+  const name = (p.display_name||'').toLowerCase();
+  const handle = (p.handle||'').toLowerCase().replace('@','');
+  const qLow = q.toLowerCase().replace('@','');
+  // Exact match = highest
+  if (name === qLow || handle === qLow) return 100;
+  // Starts with
+  if (name.startsWith(qLow) || handle.startsWith(qLow)) return 80;
+  // Contains
+  if (name.includes(qLow) || handle.includes(qLow)) return 60;
+  // Fuzzy — score based on distance vs length
+  const distName = levenshtein(qLow, name.slice(0, qLow.length + 2));
+  const distHandle = levenshtein(qLow, handle.slice(0, qLow.length + 2));
+  const best = Math.min(distName, distHandle);
+  if (best <= 1) return 50;
+  if (best <= 2) return 35;
+  if (best <= 3) return 20;
+  return 0;
+}
+
 async function searchFriends() {
   const q = document.getElementById('friend-search-input').value.trim();
   const resultsEl = document.getElementById('friend-search-results');
@@ -3256,27 +3299,58 @@ async function searchFriends() {
     </div>`;
     return; 
   }
-  resultsEl.innerHTML = '<div style="padding:16px;color:var(--gray-400);font-size:13px;">Searching…</div>';
-  const { data } = await _supaClient
-    .from('profiles')
-    .select('id, display_name, handle, avatar_color')
-    .neq('id', currentSupaUser.id)
-    .or(`display_name.ilike.%${q}%,handle.ilike.%${q}%`)
-    .limit(20);
-  if (!data || data.length === 0) {
-    resultsEl.innerHTML = '<p style="color:var(--gray-400);font-size:14px;padding:20px 0;">No users found</p>';
-    return;
-  }
-  const followingIds = new Set(friends.map(f => f.id));
-  resultsEl.innerHTML = data.map(p => {
-    const name = p.display_name || p.handle || 'User';
-    const isFollowing = followingIds.has(p.id);
-    return `<div class="friend-row">
-      <div class="notif-avatar" style="background:${esc(p.avatar_color||'#2DD4BF')}">${esc(name[0]?.toUpperCase()||'U')}</div>
-      <div class="friend-info"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
-      <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Following':'Follow'}</button>
-    </div>`;
-  }).join('');
+
+  // Show skeleton/loading instantly
+  resultsEl.innerHTML = `<div style="padding:12px 0;display:flex;flex-direction:column;gap:10px;">
+    ${[1,2,3].map(()=>`<div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--gray-100);flex-shrink:0;"></div>
+      <div style="flex:1;"><div style="height:12px;background:var(--gray-100);border-radius:6px;width:60%;margin-bottom:6px;"></div><div style="height:10px;background:var(--gray-100);border-radius:6px;width:40%;"></div></div>
+    </div>`).join('')}
+  </div>`;
+
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(async () => {
+    // Broad search — get candidates, then rank client-side
+    const { data } = await _supaClient
+      .from('profiles')
+      .select('id, display_name, handle, avatar_color, avatar_url')
+      .neq('id', currentSupaUser?.id || '')
+      .or(`display_name.ilike.%${q.slice(0,3)}%,handle.ilike.%${q.slice(0,3)}%`)
+      .limit(40);
+
+    const followingIds = new Set(friends.map(f => f.id));
+
+    // Score + filter + sort
+    const scored = (data||[])
+      .map(p => ({ ...p, _score: scorePerson(p, q) }))
+      .filter(p => p._score > 0)
+      .sort((a,b) => b._score - a._score)
+      .slice(0, 10);
+
+    if (scored.length === 0) {
+      resultsEl.innerHTML = `<div style="text-align:center;padding:32px 20px;">
+        <div style="font-size:32px;margin-bottom:8px;">🤷</div>
+        <div style="font-size:13px;font-weight:600;color:var(--black);">No one found for "${esc(q)}"</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">Try a different name or @handle</div>
+      </div>`;
+      return;
+    }
+
+    const followingIds2 = new Set(friends.map(f => f.id));
+    resultsEl.innerHTML = scored.map(p => {
+      const name = p.display_name || p.handle || 'User';
+      const isFollowing = followingIds2.has(p.id);
+      const colour = p.avatar_color || '#2DD4BF';
+      const avatarContent = p.avatar_url
+        ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : esc(name[0]?.toUpperCase()||'U');
+      return `<div class="friend-row">
+        <div class="notif-avatar" style="background:${colour};overflow:hidden;padding:0;">${avatarContent}</div>
+        <div class="friend-info"><div class="fname">${esc(name)}</div><div class="fhandle">${esc(p.handle||'')}</div></div>
+        <button class="btn-add-friend ${isFollowing?'following':''}" onclick="toggleFollow('${p.id}','${esc(name)}',this)">${isFollowing?'Following':'Follow'}</button>
+      </div>`;
+    }).join('');
+  }, 250); // 250ms debounce
 }
 
 async function toggleFollow(userId, name, btn) {
@@ -4661,6 +4735,7 @@ function submitClaim() {
 // ==========================================
 let isPro = false;
 let userAvatarColour = '#2DD4BF';
+let userAvatarImage = null; // base64 data URL if user uploaded a photo
 const FREE_THEMES = ['default','dark','mint']; // 3 free themes
 let userEmoji = '';
 let userNameColour = '#111111';
@@ -4734,26 +4809,76 @@ function previewName() {
 }
 
 let _pendingAvatarColour = null;
+let _pendingAvatarImage = null; // base64 data URL
 
-function toggleAvatarColourPicker() {
-  const picker = document.getElementById('avatar-colour-picker');
-  if (!picker) return;
-  picker.style.display = picker.style.display === 'none' ? 'flex' : 'none';
+function triggerAvatarUpload() {
+  document.getElementById('avatar-upload-input')?.click();
 }
+
+function handleAvatarUpload(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Image too large — max 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    _pendingAvatarImage = dataUrl;
+    _pendingAvatarColour = null;
+    // Show in preview
+    const img = document.getElementById('edit-avatar-img');
+    const initial = document.getElementById('edit-avatar-initial');
+    if (img) { img.src = dataUrl; img.style.display = 'block'; }
+    if (initial) initial.style.display = 'none';
+    // Hide colour swatches
+    const picker = document.getElementById('avatar-colour-picker');
+    if (picker) picker.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Hover overlay show/hide
+document.addEventListener('DOMContentLoaded', () => {
+  const prev = document.getElementById('edit-avatar-preview');
+  const overlay = document.getElementById('avatar-overlay');
+  if (prev && overlay) {
+    prev.addEventListener('mouseenter', () => overlay.style.opacity = '1');
+    prev.addEventListener('mouseleave', () => overlay.style.opacity = '0');
+  }
+});
 
 function setAvatarColour(colour, el) {
   _pendingAvatarColour = colour;
+  _pendingAvatarImage = null;
   // Update preview
   const preview = document.getElementById('edit-avatar-preview');
   if (preview) preview.style.background = colour;
-  // Highlight selected swatch
+  // Show initial, hide photo
+  const img = document.getElementById('edit-avatar-img');
+  const initial = document.getElementById('edit-avatar-initial');
+  if (img) { img.style.display = 'none'; img.src = ''; }
+  if (initial) initial.style.display = '';
+  // Highlight swatch
   document.querySelectorAll('#avatar-colour-picker div').forEach(d => d.style.outline = 'none');
   if (el) el.style.outline = '3px solid var(--black)';
-  // Hide picker after selection
-  setTimeout(() => {
-    const picker = document.getElementById('avatar-colour-picker');
-    if (picker) picker.style.display = 'none';
-  }, 300);
+}
+
+function applyAvatarImageEverywhere(dataUrl) {
+  // Replace all our own avatar spots with the photo
+  document.querySelectorAll('.avatar-lg').forEach(a => {
+    // clear text, show as background image
+    a.style.backgroundImage = `url('${dataUrl}')`;
+    a.style.backgroundSize = 'cover';
+    a.style.backgroundPosition = 'center';
+    a.textContent = '';
+  });
+  // also settings small avatar
+  const sa = document.getElementById('settings-avatar');
+  if (sa) {
+    sa.style.backgroundImage = `url('${dataUrl}')`;
+    sa.style.backgroundSize = 'cover';
+    sa.style.backgroundPosition = 'center';
+    sa.textContent = '';
+  }
 }
 
 async function saveProfile() {
@@ -4771,10 +4896,17 @@ async function saveProfile() {
   }
   userHandle = newHandle;
   
-  // Apply avatar colour if changed
-  if (_pendingAvatarColour) {
+  // Apply avatar image if uploaded
+  if (_pendingAvatarImage) {
+    userAvatarImage = _pendingAvatarImage;
+    _pendingAvatarImage = null;
+    // Update all avatar spots
+    applyAvatarImageEverywhere(userAvatarImage);
+    await _supaClient.from('profiles').update({ avatar_url: userAvatarImage }).eq('id', currentSupaUser.id);
+  } else if (_pendingAvatarColour) {
     userAvatarColour = _pendingAvatarColour;
-    document.querySelectorAll('.avatar-lg').forEach(a => a.style.background = userAvatarColour);
+    userAvatarImage = null;
+    document.querySelectorAll('.avatar-lg').forEach(a => { a.style.background = userAvatarColour; });
     _pendingAvatarColour = null;
   }
   if (isPro) {
@@ -4968,12 +5100,25 @@ function applyProfileToUI(profile) {
   const editHandle = document.getElementById('edit-handle');
   if (editHandle) editHandle.value = handle;
 
-  // Avatar colour
+  // Avatar — photo or colour
   const colour = profile.avatar_color || '#2DD4BF';
   userAvatarColour = colour;
-  document.querySelectorAll('.avatar-lg').forEach(a => { a.style.background = colour; });
-  const editAvatarPrev = document.getElementById('edit-avatar-preview');
-  if (editAvatarPrev) editAvatarPrev.style.background = colour;
+  if (profile.avatar_url) {
+    userAvatarImage = profile.avatar_url;
+    applyAvatarImageEverywhere(profile.avatar_url);
+    // Also set edit preview
+    const img = document.getElementById('edit-avatar-img');
+    const initial = document.getElementById('edit-avatar-initial');
+    if (img) { img.src = profile.avatar_url; img.style.display = 'block'; }
+    if (initial) initial.style.display = 'none';
+    const editPrev = document.getElementById('edit-avatar-preview');
+    if (editPrev) editPrev.style.background = colour;
+  } else {
+    userAvatarImage = null;
+    document.querySelectorAll('.avatar-lg').forEach(a => { a.style.background = colour; a.style.backgroundImage = ''; });
+    const editAvatarPrev = document.getElementById('edit-avatar-preview');
+    if (editAvatarPrev) { editAvatarPrev.style.background = colour; editAvatarPrev.style.backgroundImage = ''; }
+  }
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
