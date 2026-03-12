@@ -1739,7 +1739,8 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="./FitShare._files/email-decode.min.js.download"></script><script data-cfasync="false" src="./FitShare._files/email-decode.min.js.download"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
 // ==========================================
 // STATE
 // ==========================================
@@ -3717,7 +3718,7 @@ function esc(str) {
 // ==========================================
 const SUPA_URL = 'https://qjdlcnjoewgdthavjuys.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZGxjbmpvZXdnZHRoYXZqdXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjQ1OTgsImV4cCI6MjA4ODg0MDU5OH0.MGXiWNXlV5haFDwe6OiwRp7yNouf-ZPDtgSH3_316Vw';
-let supabase = null;
+let _supaClient = null;
 
 let currentSupaUser = null; // the logged-in Supabase user object
 let currentProfile = null;  // the profile row from our profiles table
@@ -3737,7 +3738,7 @@ function showAuthScreen(which) {
 // == SAVE PROFILE TO DB (called after confirmed session exists) ==
 async function saveProfileToDB(user, name, handle, email) {
   try {
-    await supabase.from('profiles').upsert({
+    await _supaClient.from('profiles').upsert({
       id: user.id,
       display_name: name,
       handle: handle,
@@ -3888,7 +3889,7 @@ async function doLogin() {
     _loginAttempts.count = 0;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await _supaClient.auth.signInWithPassword({ email, password });
 
   btn.textContent = 'Log In';
   btn.style.opacity = '1';
@@ -3939,7 +3940,7 @@ async function doSignup() {
       ? (handle.startsWith('@') ? handle : '@' + handle)
       : '@' + name.replace(/\s+/g,'').toLowerCase();
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await _supaClient.auth.signUp({
       email,
       password,
       options: {
@@ -3986,7 +3987,7 @@ async function doSignup() {
 async function doForgotPassword() {
   const email = document.getElementById('login-email').value.trim();
   if (!email) { showAuthError('login', 'Enter your email above first'); return; }
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await _supaClient.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin
   });
   if (error) { showAuthError('login', error.message); return; }
@@ -3997,7 +3998,7 @@ async function doForgotPassword() {
 
 // == LOGOUT ==
 async function doLogout() {
-  await supabase.auth.signOut();
+  await _supaClient.auth.signOut();
   currentSupaUser = null;
   currentProfile = null;
   myItems = [];
@@ -4018,7 +4019,7 @@ async function saveItemToSupabase(item) {
     emoji: item.emoji || '\uD83D\uDC55',
     created_at: new Date().toISOString()
   };
-  const { data, error } = await supabase.from('items').insert(row).select().single();
+  const { data, error } = await _supaClient.from('items').insert(row).select().single();
   if (data) item.localId = data.id;
   return item;
 }
@@ -4028,13 +4029,13 @@ async function deleteItemFromSupabase(localId) {
   if (!currentSupaUser) return;
   // Only delete if it's a real UUID (not a local_ temp id)
   if (typeof localId === 'string' && localId.startsWith('local_')) return;
-  await supabase.from('items').delete().eq('id', localId).eq('user_id', currentSupaUser.id);
+  await _supaClient.from('items').delete().eq('id', localId).eq('user_id', currentSupaUser.id);
 }
 
 // == SAVE PROFILE ==
 async function saveProfileToSupabase(name, handle) {
   if (!currentSupaUser) return;
-  await supabase.from('profiles').upsert({
+  await _supaClient.from('profiles').upsert({
     id: currentSupaUser.id,
     display_name: name,
     handle: handle,
@@ -4060,31 +4061,23 @@ function showAuthError(screen, msg) {
   renderThemeGrid();
 
   // Hard fallback \u2014 show login after 8s no matter what
-  const hardFallback = setTimeout(() => {
-    console.warn('Boot timed out \u2014 showing login');
-    showAuthScreen('login');
-  }, 8000);
-
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-
-  script.onload = async function() {
+  // SDK already loaded as static <script> tag above
+  // Initialize Supabase client directly
+  (async function boot() {
     try {
-      // The UMD exports createClient globally (not window.supabase)
-      const _sdk = window.supabase || (typeof createClient !== 'undefined' ? {createClient} : null);
-      if (!_sdk) throw new Error('Supabase SDK not found on window');
-      supabase = _sdk.createClient(SUPA_URL, SUPA_KEY);
+      if (!window.supabase || !window.supabase.createClient) {
+        throw new Error('Supabase SDK not loaded');
+      }
+      _supaClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
     } catch(e) {
-      clearTimeout(hardFallback);
       console.error('Supabase init failed:', e);
       showAuthScreen('login');
       return;
     }
 
-    // Now safe to check session
+    // Check for existing session
     try {
-      const { data } = await supabase.auth.getSession();
-      clearTimeout(hardFallback);
+      const { data } = await _supaClient.auth.getSession();
       if (data?.session?.user) {
         currentSupaUser = data.session.user;
         try { await loadProfile(data.session.user); } catch(e) { console.warn(e); }
@@ -4093,13 +4086,12 @@ function showAuthError(screen, msg) {
         showAuthScreen('login');
       }
     } catch(e) {
-      clearTimeout(hardFallback);
       console.error('getSession failed:', e);
       showAuthScreen('login');
     }
 
-    // Listen for future auth changes (e.g. email confirm redirect)
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    // Listen for future auth changes
+    _supaClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user && currentScreen === 'login') {
         currentSupaUser = session.user;
         try { await loadProfile(session.user); } catch(e) { console.warn(e); }
@@ -4110,15 +4102,7 @@ function showAuthError(screen, msg) {
         currentProfile = null;
       }
     });
-  };
-
-  script.onerror = function() {
-    clearTimeout(hardFallback);
-    console.error('Supabase SDK failed to load from CDN');
-    showAuthScreen('login');
-  };
-
-  document.head.appendChild(script);
+  })();
 })();
 
 // ==========================================
