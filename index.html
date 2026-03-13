@@ -2135,6 +2135,7 @@ const sampleItems = []; // real data only
 
 let myItems = [];
 let otherItems = []; // real items from other users in Supabase
+let notifLog = JSON.parse(localStorage.getItem('fs_notiflog') || '[]'); // persistent notification history
 let borrowRequests = []; // loaded from Supabase
 
 // ==========================================
@@ -3378,11 +3379,26 @@ async function toggleLike(id) {
 // NOTIFICATIONS
 // ==========================================
 function updateNotifBells() {
-  const count = borrowRequests.filter(r => r.status === 'pending').length;
+  const unreadLog = notifLog.filter(n => !n.read).length;
+  const count = borrowRequests.filter(r => r.status === 'pending').length + incomingRequests.length + unreadLog;
   ['notif-bell-home','notif-bell-explore'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.classList.toggle('has-notif', count > 0);
+    // Show numeric badge if >0
+    let badge = el.querySelector('.notif-count-badge');
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'notif-count-badge';
+        badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;';
+        el.style.position = 'relative';
+        el.appendChild(badge);
+      }
+      badge.textContent = count;
+    } else if (badge) {
+      badge.remove();
+    }
   });
 }
 
@@ -3409,17 +3425,65 @@ function renderWardrobeLikedTab() {
 function renderNotifications() {
   const notifList = document.getElementById('notif-list');
   if (!notifList) return;
-  const requestNotifs = borrowRequests.filter(r => r.status === 'pending');
-  if (requestNotifs.length === 0) {
+  markAllNotifsRead();
+
+  // Pending borrow requests always shown at top (actionable)
+  const pendingBorrows = borrowRequests.filter(r => r.status === 'pending');
+  // Pending friend requests (actionable)
+  const pendingFriends = incomingRequests;
+  // History log (everything else)
+  const historyLog = notifLog.filter(n =>
+    n.type !== 'borrow_request' && n.type !== 'friend_request' ||
+    (n.type === 'borrow_request' && !pendingBorrows.find(b => b.id === n.data?.reqId)) ||
+    (n.type === 'friend_request' && !pendingFriends.find(f => f.id === n.data?.userId))
+  );
+
+  const hasAnything = pendingBorrows.length > 0 || pendingFriends.length > 0 || historyLog.length > 0;
+  if (!hasAnything) {
     notifList.innerHTML = `
       <div style="text-align:center;padding:60px 20px;">
         <div style="font-size:48px;margin-bottom:12px;">🔔</div>
         <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">All caught up!</div>
-        <div style="font-size:13px;color:var(--gray-500);">When friends request to borrow your items, you'll see it here.</div>
+        <div style="font-size:13px;color:var(--gray-500);">Your notifications will appear here.</div>
       </div>`;
     return;
   }
-  notifList.innerHTML = requestNotifs.map(r => {
+
+  let html = '';
+
+  // ── SECTION: Pending friend requests ──
+  if (pendingFriends.length > 0) {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:16px 16px 8px;">Friend Requests</div>`;
+    html += pendingFriends.map(p => {
+      const avatarContent = p.avatarUrl
+        ? `<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : `<span style="font-size:16px;font-weight:700;color:white;">${esc(p.avatar)}</span>`;
+      return `<div class="notif-item unread" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+        <div class="notif-avatar" style="background:${esc(p.color)};overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center;" onclick="openUserProfile('${p.id}')">${avatarContent}</div>
+        <div style="flex:1;min-width:0;cursor:pointer;" onclick="openUserProfile('${p.id}')">
+          <div style="font-size:13px;color:var(--black);"><strong>${esc(p.name)}</strong> wants to be your friend</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">${esc(p.handle)}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button onclick="acceptFriendRequest('${p.id}')" style="padding:7px 14px;border-radius:20px;border:none;background:#22c55e;color:white;font-size:12px;font-weight:700;cursor:pointer;">Accept</button>
+          <button onclick="declineFriendRequest('${p.id}')" style="padding:7px 12px;border-radius:20px;border:1.5px solid var(--gray-200);background:transparent;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;">Decline</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── SECTION: Pending borrow requests ──
+  if (pendingBorrows.length > 0) {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:16px 16px 8px;${pendingFriends.length>0?'border-top:1px solid var(--gray-100);':''}">Borrow Requests</div>`;
+  }
+  if (pendingBorrows.length === 0 && historyLog.length === 0) {
+    notifList.innerHTML = html;
+    return;
+  }
+  if (pendingBorrows.length === 0) {
+    // Skip to history
+  } else {
+  notifList.innerHTML = html + pendingBorrows.map(r => {
     // Find item image
     const reqItem = myItems.find(i => i.id === r.itemId || i.localId === r.itemId);
     const thumbHTML = reqItem?.imageData
@@ -3450,6 +3514,78 @@ function renderNotifications() {
       </div>
     </div>`;
   }).join('');
+  } // end if pendingBorrows
+
+  // ── SECTION: Notification history log ──────────────────────
+  if (historyLog.length > 0) {
+    const existingEl = document.getElementById('notif-list');
+    const currentHTML = existingEl ? existingEl.innerHTML : '';
+    const historyHTML = `<div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;padding:16px 16px 8px;border-top:1px solid var(--gray-100);">Recent</div>` +
+      historyLog.slice(0, 30).map(n => {
+        const timeAgo = _timeAgo(n.time);
+        if (n.type === 'borrow_approved') {
+          const br = borrowRequests.find(b => b.id === n.data?.reqId);
+          return `<div class="notif-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#22c55e20;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">✓</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--black);">Your borrow request was <strong>approved</strong>!</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${timeAgo}</div>
+            </div>
+          </div>`;
+        }
+        if (n.type === 'borrow_declined') {
+          return `<div class="notif-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#ef444420;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">✕</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--black);">Your borrow request was <strong>declined</strong></div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${timeAgo}</div>
+            </div>
+          </div>`;
+        }
+        if (n.type === 'friend_item') {
+          return `<div class="notif-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;" onclick="openItemDetail('${n.data?.itemId}')">
+            <div style="width:40px;height:40px;border-radius:50%;background:${esc(n.data?.color||'#2DD4BF')};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">${esc(n.data?.avatar||'?')}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--black);"><strong>${esc(n.data?.name||'A friend')}</strong> posted <strong>${esc(n.data?.itemTitle||'a new item')}</strong> ${n.data?.itemEmoji||'👗'}</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${timeAgo}</div>
+            </div>
+          </div>`;
+        }
+        if (n.type === 'friend_request') {
+          return `<div class="notif-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:${esc(n.data?.color||'#2DD4BF')};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;">${esc(n.data?.avatar||'?')}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--black);"><strong>${esc(n.data?.name||'Someone')}</strong> sent you a friend request</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${timeAgo}</div>
+            </div>
+          </div>`;
+        }
+        if (n.type === 'borrow_request') {
+          return `<div class="notif-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:${esc(n.data?.fromColor||'#2DD4BF')};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;">${esc(n.data?.fromAvatar||'?')}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;color:var(--black);"><strong>${esc(n.data?.from||'Someone')}</strong> requested to borrow <strong>${esc(n.data?.item||'your item')}</strong></div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${timeAgo}</div>
+            </div>
+          </div>`;
+        }
+        return '';
+      }).filter(Boolean).join('');
+    if (notifList) notifList.innerHTML = (notifList.innerHTML || '') + historyHTML;
+  }
+}
+
+function _timeAgo(isoString) {
+  if (!isoString) return '';
+  const diff = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(isoString).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
 }
 
 async function approveFromNotif(reqId) {
@@ -3868,14 +4004,20 @@ async function acceptFriendRequest(userId) {
   await _supaClient.from('follows').insert({ follower_id: currentSupaUser.id, following_id: userId });
   showToast('✓ Friend added!');
   await loadFriends();
-  loadOtherItems();
+  loadOtherItems().then(() => renderFeed());
+  renderNotifications();
+  updateNotifBells();
+  // Mark the friend_request notif for this user as read
+  notifLog.filter(n => n.type === 'friend_request' && n.data?.userId === userId).forEach(n => n.read = true);
+  localStorage.setItem('fs_notiflog', JSON.stringify(notifLog));
 }
 
 async function declineFriendRequest(userId) {
-  // Delete their follow of me
   await _supaClient.from('follows').delete().eq('follower_id', userId).eq('following_id', currentSupaUser.id);
   showToast('Request declined');
   await loadFriends();
+  renderNotifications();
+  updateNotifBells();
 }
 
 async function cancelFriendRequest(userId) {
@@ -6393,6 +6535,28 @@ async function enterApp() {
   setupRealtimeSubscriptions();
 }
 
+// ── NOTIFICATION LOG ──────────────────────────────────────────
+function pushNotif(type, data) {
+  const notif = {
+    id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    type,   // friend_request | borrow_request | borrow_approved | borrow_declined | friend_item | friend_accepted
+    data,   // arbitrary payload
+    time: new Date().toISOString(),
+    read: false
+  };
+  notifLog.unshift(notif); // newest first
+  if (notifLog.length > 100) notifLog = notifLog.slice(0, 100); // cap at 100
+  localStorage.setItem('fs_notiflog', JSON.stringify(notifLog));
+  renderNotifications();
+  updateNotifBells();
+}
+
+function markAllNotifsRead() {
+  notifLog.forEach(n => n.read = true);
+  localStorage.setItem('fs_notiflog', JSON.stringify(notifLog));
+  updateNotifBells();
+}
+
 function setupRealtimeSubscriptions() {
   if (!currentSupaUser || !_supaClient) return;
   // Clean up any existing channels before re-subscribing
@@ -6406,8 +6570,9 @@ function setupRealtimeSubscriptions() {
       filter: `owner_id=eq.${currentSupaUser.id}`
     }, async () => {
       await loadBorrowRequests();
+      const newReq = borrowRequests[0];
+      if (newReq) pushNotif('borrow_request', { reqId: newReq.id, from: newReq.from, fromColor: newReq.fromColor, fromAvatar: newReq.fromAvatar, item: newReq.item, itemEmoji: newReq.itemEmoji, fromDate: newReq.fromDate, toDate: newReq.toDate });
       showToast('📦 New borrow request!');
-      updateNotifBells();
     })
     // Request status changed (I'm the requester)
     .on('postgres_changes', {
@@ -6417,6 +6582,7 @@ function setupRealtimeSubscriptions() {
       const r = payload.new;
       const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
       if (r.status === 'approved') {
+        pushNotif('borrow_approved', { item: r.item_id, reqId: r.id });
         showToast('✓ Your borrow request was approved! 🎉');
         if (t) {
           const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
@@ -6426,6 +6592,7 @@ function setupRealtimeSubscriptions() {
           renderInbox(); updateNotifBells();
         }
       } else if (r.status === 'declined') {
+        pushNotif('borrow_declined', { item: r.item_id, reqId: r.id });
         showToast('Your borrow request was declined');
         if (t) {
           const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
@@ -6446,10 +6613,11 @@ function setupRealtimeSubscriptions() {
     }, async payload => {
       console.log('[RT] New follower:', payload.new.follower_id);
       await loadFriends();
-      await loadOtherItems(); // their items now appear in my feed
+      await loadOtherItems();
       renderFeed(); renderFriends();
+      const newFriend = incomingRequests.find(r => r.id === payload.new.follower_id) || { name: 'Someone', avatar: '?', color: '#2DD4BF', handle: '' };
+      pushNotif('friend_request', { userId: payload.new.follower_id, name: newFriend.name, avatar: newFriend.avatar, color: newFriend.color, handle: newFriend.handle });
       showToast('👋 Someone added you as a friend!');
-      updateNotifBells();
     })
     // Someone removed me (or I removed someone)
     .on('postgres_changes', {
@@ -6484,6 +6652,8 @@ function setupRealtimeSubscriptions() {
       console.log('[RT] Friend posted new item:', newItem.title);
       await loadOtherItems();
       renderFeed();
+      const poster = friends.find(f => f.id === newItem.user_id);
+      if (poster) pushNotif('friend_item', { userId: newItem.user_id, name: poster.name, avatar: poster.avatar, color: poster.color, itemTitle: newItem.title, itemEmoji: newItem.emoji || '👗', itemId: newItem.id });
       showToast('👗 A friend just posted a new item!');
     })
     // Item deleted by a friend — remove from feed
