@@ -3470,15 +3470,20 @@ async function loadFriends() {
 // Load borrow requests from Supabase
 async function loadBorrowRequests() {
   if (!currentSupaUser) return;
-  const { data } = await _supaClient
-    .from('borrow_requests')
-    .select('*, items(title, emoji), profiles!borrow_requests_requester_id_fkey(display_name, handle, avatar_color)')
-    .eq('owner_id', currentSupaUser.id)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
+  let data;
+  try {
+    const res = await _supaClient
+      .from('borrow_requests')
+      .select('*, items(title, emoji, image_url), requester:requester_id(display_name, handle, avatar_color)')
+      .eq('owner_id', currentSupaUser.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (res.error) { console.warn('[loadBorrowRequests]', res.error.message); return; }
+    data = res.data;
+  } catch(e) { console.warn('[loadBorrowRequests] fetch failed:', e); return; }
   if (data) {
     borrowRequests = data.map(row => {
-      const p = row.profiles || {};
+      const p = row.requester || row.profiles || {};
       const name = p.display_name || p.handle || 'User';
       return {
         id: row.id,
@@ -3540,8 +3545,9 @@ function renderFriends() {
       <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">Search for friends or share your invite link to get started!</div>
       <button class="btn-primary" style="font-size:13px;padding:10px 20px;" onclick="showFTab('find-friends', document.querySelectorAll('.ftab')[1])">Find Friends</button>
     </div>`;
-  document.getElementById('my-friends-count').textContent = friends.length;
-  renderBorrowRequests();
+  const fc = document.getElementById('my-friends-count');
+  if (fc) fc.textContent = friends.length;
+  // Note: renderBorrowRequests called separately after loadBorrowRequests, not here
 }
 
 let _searchDebounce = null;
@@ -3999,17 +4005,21 @@ function _userProfileItemCard(item) {
 async function unfollowFriend(userId, btn) {
   await _supaClient.from('follows').delete().eq('follower_id', currentSupaUser.id).eq('following_id', userId);
   friends = friends.filter(f => f.id !== userId);
-  document.getElementById('my-friends-count').textContent = friends.length;
+  const fc2 = document.getElementById('my-friends-count');
+  if (fc2) fc2.textContent = friends.length;
   renderFriends();
   showToast('Unfollowed');
 }
 
 function renderBorrowRequests() {
   const pending = borrowRequests.filter(r => r.status === 'pending');
-  document.getElementById('freq-badge').textContent = pending.length;
-  document.getElementById('freq-badge').style.display = pending.length ? 'inline' : 'none';
+  const badge = document.getElementById('freq-badge');
+  if (badge) { badge.textContent = pending.length; badge.style.display = pending.length ? 'inline' : 'none'; }
   updateNotifBells();
-  document.getElementById('borrow-requests-list').innerHTML = pending.length ? pending.map(r => `
+  const listEl = document.getElementById('borrow-requests-list');
+  if (!listEl) return;
+  try {
+  listEl.innerHTML = pending.length ? pending.map(r => `
     <div class="breq-card" id="breq-${r.id}">
       <!-- Header: who + item -->
       <div class="breq-header">
@@ -4062,6 +4072,7 @@ function renderBorrowRequests() {
       </div>
     </div>`).join('') :
     '<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:14px;">No pending requests \uD83D\uDC4D</div>';
+  } catch(e) { console.warn('[renderBorrowRequests]', e); }
 }
 
 function toggleRequestDeposit(id) {
@@ -6203,13 +6214,13 @@ async function enterApp() {
   } else if (urlParams.get('plus') === 'cancelled') {
     window.history.replaceState({}, '', window.location.pathname);
   }
-  // Load all data in parallel, wait for everything before rendering
+  // Load all data in parallel — each wrapped so one failure can't kill login
   await Promise.all([
-    loadMyItems(),
-    loadOtherItems(),
-    loadFriends(),
-    loadBorrowRequests(),
-    loadLikedItems()
+    loadMyItems().catch(e => console.warn('[enterApp] loadMyItems:', e)),
+    loadOtherItems().catch(e => console.warn('[enterApp] loadOtherItems:', e)),
+    loadFriends().catch(e => console.warn('[enterApp] loadFriends:', e)),
+    loadBorrowRequests().catch(e => console.warn('[enterApp] loadBorrowRequests:', e)),
+    loadLikedItems().catch(e => console.warn('[enterApp] loadLikedItems:', e)),
   ]);
 
   // Show bottom nav now that user is authenticated
@@ -6411,8 +6422,14 @@ async function doLogin() {
   }
   appEntered = true;
   currentSupaUser = data.user;
-  await loadProfile(data.user);
-  enterApp();
+  try { await loadProfile(data.user); } catch(e) { console.warn('[LOGIN] loadProfile:', e); }
+  try {
+    await enterApp();
+  } catch(e) {
+    console.error('[LOGIN] enterApp failed:', e);
+    showAuthError('login', 'Login succeeded but app failed to load — please refresh');
+    appEntered = false;
+  }
 }
 
 // == FORGOT PASSWORD ==
@@ -6679,29 +6696,24 @@ function showAuthError(screen, msg) {
     _supaClient.auth.onAuthStateChange(async (event, session) => {
       console.log('[AUTH]', event, session?.user?.email || 'no session', 'appEntered:', appEntered);
 
-      if (event === 'INITIAL_SESSION') {
-        if (session?.user) {
-          // Returning user with existing session — auto login
-          if (!appEntered) {
-            appEntered = true;
-            currentSupaUser = session.user;
-            try { await loadProfile(session.user); } catch(e) { console.warn('[AUTH] loadProfile error:', e); }
-            enterApp();
-          }
-        } else {
-          // No session — show login after brief wait (Google OAuth may still be arriving)
-          setTimeout(() => { if (!appEntered) showAuthScreen('login'); }, 600);
-        }
-      }
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Only handle Google OAuth here — email/password sets appEntered before calling enterApp
+      // Supabase v2: SIGNED_IN fires before INITIAL_SESSION for returning sessions.
+      // We handle whichever valid session event arrives first, ignore the second.
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session?.user) {
         if (!appEntered) {
           appEntered = true;
           currentSupaUser = session.user;
+          console.log('[AUTH] entering app via', event);
           try { await loadProfile(session.user); } catch(e) { console.warn('[AUTH] loadProfile error:', e); }
-          enterApp();
+          try { await enterApp(); } catch(e) { console.error('[AUTH] enterApp error:', e); showAuthScreen('login'); appEntered = false; }
+        } else {
+          console.log('[AUTH] already entered, ignoring', event);
         }
+        return;
+      }
+
+      if (event === 'INITIAL_SESSION' && !session) {
+        setTimeout(() => { if (!appEntered) showAuthScreen('login'); }, 600);
+        return;
       }
 
       if (event === 'SIGNED_OUT') {
