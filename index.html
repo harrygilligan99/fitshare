@@ -3240,6 +3240,12 @@ function saveCollection() {
 
 function saveCollections() {
   localStorage.setItem('fs_collections', JSON.stringify(collections));
+  // Also persist to Supabase so friends can see collection names
+  if (currentSupaUser) {
+    // Strip cover images from what we store (too large) — just store id/name/emoji
+    const colMeta = collections.map(({id, name, emoji}) => ({id, name, emoji}));
+    _supaClient.from('profiles').update({ collections: colMeta }).eq('id', currentSupaUser.id).then(() => {});
+  }
 }
 
 function openAddToCollection(itemId) {
@@ -3933,6 +3939,8 @@ async function openUserProfile(userId) {
   }
 
   _renderUserProfileTab('all', userId);
+  // Load their friends count
+  _loadUserFriendsCount(userId);
 }
 
 function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, activeTab) {
@@ -3968,8 +3976,15 @@ function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowi
       <div style="flex:1;">
         <div style="font-size:18px;font-weight:800;color:var(--black);">${esc(name)}</div>
         <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${esc(handle)}</div>
-        <div style="display:flex;gap:16px;margin-top:8px;">
-          <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:var(--black);">${theirItems.length}</div><div style="font-size:11px;color:var(--gray-500);">Items</div></div>
+        <div style="display:flex;gap:20px;margin-top:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--black);">${theirItems.length}</div>
+            <div style="font-size:11px;color:var(--gray-500);">Items</div>
+          </div>
+          <div style="text-align:center;" id="up-friends-count-${userId}">
+            <div style="font-size:16px;font-weight:800;color:var(--black);">–</div>
+            <div style="font-size:11px;color:var(--gray-500);">Friends</div>
+          </div>
         </div>
       </div>
       <div>
@@ -4035,9 +4050,12 @@ function _renderUserProfileTab(tab, userId) {
   if (tab === 'collections') {
     // Build collection map from boards array on items
     const colMap = {};
+    // Build a lookup of board id -> name from the owner's saved collections
+    const ownerColMeta = {};
+    theirItems.forEach(i => (i.ownerCollections||[]).forEach(col => { ownerColMeta[col.id] = col; }));
     theirItems.forEach(item => {
       (item.boards || []).forEach(b => {
-        if (!colMap[b]) colMap[b] = { name: b, items: [] };
+        if (!colMap[b]) colMap[b] = { id: b, name: ownerColMeta[b]?.name || b, emoji: ownerColMeta[b]?.emoji || '📁', items: [] };
         colMap[b].items.push(item);
       });
     });
@@ -4058,7 +4076,7 @@ function _renderUserProfileTab(tab, userId) {
         return `<div style="border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--gray-200);box-shadow:0 1px 4px rgba(0,0,0,0.06);" onclick="_expandUserCollection('${userId}','${esc(col.name)}')">
           <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;">${allThumbs.join('')}</div>
           <div style="padding:9px 11px;background:var(--card-bg);">
-            <div style="font-size:13px;font-weight:700;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(col.name)}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${col.emoji} ${esc(col.name)}</div>
             <div style="font-size:11px;color:var(--gray-500);">${col.items.length} item${col.items.length!==1?'s':''}</div>
           </div>
         </div>`;
@@ -4080,6 +4098,14 @@ function _renderUserProfileTab(tab, userId) {
     </div>`;
     return;
   }
+}
+
+async function _loadUserFriendsCount(userId) {
+  const el = document.getElementById('up-friends-count-' + userId);
+  if (!el) return;
+  const { count } = await _supaClient.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
+  const countEl = el.querySelector('div');
+  if (countEl) countEl.textContent = count || 0;
 }
 
 function _expandUserCollection(userId, colName) {
@@ -5946,8 +5972,11 @@ function _setAvatarEl(el, dataUrl) {
 
 function applyAvatarImageEverywhere(dataUrl) {
   if (!dataUrl) return;
-  // All .avatar-lg elements (home profile, etc)
-  document.querySelectorAll('.avatar-lg').forEach(a => _setAvatarEl(a, dataUrl));
+  // All .avatar-lg elements — clear text initial, set photo
+  document.querySelectorAll('.avatar-lg').forEach(a => {
+    a.textContent = '';
+    _setAvatarEl(a, dataUrl);
+  });
   // Settings avatar
   _setAvatarEl(document.getElementById('settings-avatar'), dataUrl);
   // QR screen avatar
@@ -6183,9 +6212,11 @@ function applyProfileToUI(profile) {
   // Update all name/handle/avatar spots
   userName = name;
   userHandle = handle;
-  // Only set initial letter if no photo uploaded
-  if (!userAvatarImage) {
-    document.querySelectorAll('.avatar-lg').forEach(a => { if (a.textContent.length <= 2) a.textContent = initial; });
+  // Set initial letter only if no photo; if photo, clear text
+  if (userAvatarImage) {
+    document.querySelectorAll('.avatar-lg').forEach(a => { a.textContent = ''; });
+  } else {
+    document.querySelectorAll('.avatar-lg').forEach(a => { a.style.backgroundImage = ''; a.textContent = initial; });
   }
   const settingsName = document.getElementById('settings-name');
   if (settingsName) settingsName.textContent = name + (userEmoji ? ' ' + userEmoji : '');
@@ -6282,6 +6313,7 @@ async function loadOtherItems() {
         ownerColor: profile.avatar_color || '#2DD4BF',
         ownerHandle: profile.handle || '@user',
         ownerAvatarUrl: profile.avatar_url || null,
+        ownerCollections: profile.collections || [],
         user_id: row.user_id,
         boards: row.boards || [],
         visibility: row.visibility || 'friends',
@@ -6363,89 +6395,141 @@ async function enterApp() {
 
 function setupRealtimeSubscriptions() {
   if (!currentSupaUser || !_supaClient) return;
-  // Clean up any existing channels
-  _supaClient.removeAllChannels?.();
+  // Clean up any existing channels before re-subscribing
+  try { _supaClient.removeAllChannels(); } catch(e) {}
 
-  // 1. New borrow requests incoming (owner receives)
-  _supaClient.channel('borrow-requests-incoming')
+  // ── 1. BORROW REQUESTS ──────────────────────────────────────
+  // Incoming request (I'm the owner)
+  _supaClient.channel('rt-borrow-in')
     .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'borrow_requests',
+      event: 'INSERT', schema: 'public', table: 'borrow_requests',
       filter: `owner_id=eq.${currentSupaUser.id}`
-    }, async payload => {
-      console.log('[RT] New borrow request:', payload.new);
+    }, async () => {
       await loadBorrowRequests();
-      // Show notification badge + toast
       showToast('📦 New borrow request!');
       updateNotifBells();
     })
+    // Request status changed (I'm the requester)
     .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'borrow_requests',
+      event: 'UPDATE', schema: 'public', table: 'borrow_requests',
       filter: `requester_id=eq.${currentSupaUser.id}`
     }, payload => {
-      // Requester gets notified when their request is approved/declined
-      console.log('[RT] Request updated:', payload.new.status);
       const r = payload.new;
+      const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
       if (r.status === 'approved') {
         showToast('✓ Your borrow request was approved! 🎉');
-        // Update the thread
-        const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
         if (t) {
           const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
           if (reqMsg) { reqMsg.pending = false; reqMsg.approved = true; }
           t.messages.push({ type: 'system_event', text: '✓ Borrow approved!', time: 'Now' });
-          t.status = 'Approved ✓';
-          t.unread = true;
-          renderInbox();
-          updateNotifBells();
+          t.status = 'Approved ✓'; t.unread = true;
+          renderInbox(); updateNotifBells();
         }
       } else if (r.status === 'declined') {
-        showToast('Your borrow request was declined — try sending a counter offer');
-        const t = threads.find(th => th.reqId === r.id || th.itemId === r.item_id);
+        showToast('Your borrow request was declined');
         if (t) {
           const reqMsg = t.messages.find(m => m.type === 'request_card' && m.pending);
           if (reqMsg) { reqMsg.pending = false; reqMsg.declined = true; }
           t.messages.push({ type: 'system_event', text: '✕ Request declined · suggest new dates?', time: 'Now' });
-          t.unread = true;
-          renderInbox();
-          updateNotifBells();
+          t.unread = true; renderInbox(); updateNotifBells();
         }
       }
     })
     .subscribe();
 
-  // 2. New follower (someone added me)
-  _supaClient.channel('follows-incoming')
+  // ── 2. FOLLOWS (friends) ────────────────────────────────────
+  _supaClient.channel('rt-follows')
+    // Someone added me
     .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'follows',
+      event: 'INSERT', schema: 'public', table: 'follows',
       filter: `following_id=eq.${currentSupaUser.id}`
     }, async payload => {
       console.log('[RT] New follower:', payload.new.follower_id);
       await loadFriends();
-      showToast('👋 Someone sent you a friend request!');
+      await loadOtherItems(); // their items now appear in my feed
+      renderFeed(); renderFriends();
+      showToast('👋 Someone added you as a friend!');
       updateNotifBells();
     })
-    .subscribe();
-
-  // 3. My items updated (profile/avatar changes reflected)
-  _supaClient.channel('profile-updates')
+    // Someone removed me (or I removed someone)
     .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'profiles',
-      filter: `id=eq.${currentSupaUser.id}`
-    }, payload => {
-      console.log('[RT] Profile updated externally');
-      // Only update if it wasn't us who triggered it
+      event: 'DELETE', schema: 'public', table: 'follows',
+      filter: `following_id=eq.${currentSupaUser.id}`
+    }, async () => {
+      await loadFriends();
+      await loadOtherItems();
+      renderFeed(); renderFriends();
+    })
+    // I added someone — pick up their items immediately
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'follows',
+      filter: `follower_id=eq.${currentSupaUser.id}`
+    }, async () => {
+      await loadFriends();
+      await loadOtherItems();
+      renderFeed(); renderFriends();
     })
     .subscribe();
 
-  console.log('[RT] Subscriptions active');
+  // ── 3. FRIENDS' NEW ITEMS ───────────────────────────────────
+  // Watch the items table for INSERTs — reload feed when a friend posts
+  _supaClient.channel('rt-items')
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'items'
+    }, async payload => {
+      const newItem = payload.new;
+      // Only react if it's from a friend
+      const isFriend = friends.some(f => f.id === newItem.user_id);
+      if (!isFriend) return;
+      console.log('[RT] Friend posted new item:', newItem.title);
+      await loadOtherItems();
+      renderFeed();
+      showToast('👗 A friend just posted a new item!');
+    })
+    // Item deleted by a friend — remove from feed
+    .on('postgres_changes', {
+      event: 'DELETE', schema: 'public', table: 'items'
+    }, async payload => {
+      const deletedId = payload.old?.id;
+      if (deletedId) otherItems = otherItems.filter(i => i.id !== deletedId);
+      renderFeed();
+    })
+    .subscribe();
+
+  // ── 4. PROFILE UPDATES (friends update avatar/name) ─────────
+  _supaClient.channel('rt-profiles')
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'profiles'
+    }, async payload => {
+      const updated = payload.new;
+      if (updated.id === currentSupaUser.id) return; // ignore own updates
+      // Update the matching items in otherItems so avatars/names refresh
+      otherItems.forEach(item => {
+        if (item.user_id === updated.id) {
+          const name = updated.display_name || updated.handle || 'User';
+          item.owner = name;
+          item.ownerAvatar = name[0]?.toUpperCase() || 'U';
+          item.ownerColor = updated.avatar_color || item.ownerColor;
+          item.ownerAvatarUrl = updated.avatar_url || null;
+          item.ownerHandle = updated.handle || item.ownerHandle;
+          item.ownerCollections = updated.collections || [];
+        }
+      });
+      // Also update friends list display names
+      friends.forEach(f => {
+        if (f.id === updated.id) {
+          f.name = updated.display_name || f.name;
+          f.handle = updated.handle || f.handle;
+          f.color = updated.avatar_color || f.color;
+          f.avatarUrl = updated.avatar_url || null;
+        }
+      });
+      if (currentScreen === 'home') renderFeed();
+      if (currentScreen === 'friends') renderFriends();
+    })
+    .subscribe();
+
+  console.log('[RT] All subscriptions active ✓');
 }
 
 // == LOGIN RATE LIMITER (client-side guard, server also enforces) ==
