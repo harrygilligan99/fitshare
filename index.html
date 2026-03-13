@@ -756,7 +756,7 @@
         <input type="text" id="signup-name" placeholder="Display name" autocomplete="name" style="width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid #374151;background:#1f2937;color:white;font-size:15px;outline:none;" onfocus="this.style.borderColor=&#39;#2DD4BF&#39;" onblur="this.style.borderColor=&#39;#374151&#39;">
         <input type="text" id="signup-handle" placeholder="Username (e.g. @emma)" autocomplete="username" style="width: 100%; padding: 15px 16px; border-radius: 14px; border: 1.5px solid rgb(55, 65, 81); background: rgb(31, 41, 55); color: white; font-size: 15px; outline: none;" onfocus="this.style.borderColor=&#39;#2DD4BF&#39;" onblur="this.style.borderColor=&#39;#374151&#39;">
         <input type="email" id="signup-email" placeholder="Email" autocomplete="email" style="width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid #374151;background:#1f2937;color:white;font-size:15px;outline:none;" onfocus="this.style.borderColor=&#39;#2DD4BF&#39;" onblur="this.style.borderColor=&#39;#374151&#39;">
-        <input type="password" id="signup-password" placeholder="Password (min 6 chars)" autocomplete="new-password" style="width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid #374151;background:#1f2937;color:white;font-size:15px;outline:none;" onfocus="this.style.borderColor=&#39;#2DD4BF&#39;" onblur="this.style.borderColor=&#39;#374151&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doSignup()">
+        <input type="password" id="signup-password" placeholder="Password (min 8 chars)" autocomplete="new-password" style="width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid #374151;background:#1f2937;color:white;font-size:15px;outline:none;" onfocus="this.style.borderColor=&#39;#2DD4BF&#39;" onblur="this.style.borderColor=&#39;#374151&#39;" onkeydown="if(event.key===&#39;Enter&#39;)doSignup()">
 
         <div id="signup-error" style="color:#f87171;font-size:13px;text-align:center;display:none;"></div>
 
@@ -2242,20 +2242,23 @@ function goBack() {
 // ==========================================
 function renderFeed() {
   const grid = document.getElementById('feed-grid');
-  const friendPool = otherItems.length > 0 ? otherItems : sampleItems;
+  const friendPool = otherItems;
   const friendIds = new Set(friends.map(f => f.id));
-  // Enforce visibility: private=never, friends=friends only, all=everyone
+  // Enforce visibility: private=only owner sees it, friends=friends only. No 'all'.
   const filteredPool = friendPool.filter(item => {
     if (item.visibility === 'private') return false;
-    // 'all' = show to everyone (including non-friends)
-    if (item.visibility === 'all') return true;
-    // 'friends' or undefined (treat as friends) = only show to mutual friends
+    // Only show items from friends
     if (!friendIds.has(item.user_id)) return false;
     return true;
   });
   const allItems = [...filteredPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
   if (allItems.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>No items yet. Be the first to upload!</p></div>';
+    const hasFriends = friends.length > 0;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div style="font-size:40px;margin-bottom:12px;">${hasFriends ? '👗' : '👋'}</div>
+      <p style="font-weight:700;margin-bottom:6px;">${hasFriends ? 'No items yet' : 'Add some friends!'}</p>
+      <p style="font-size:13px;color:var(--gray-500);">${hasFriends ? 'Your friends haven\'t uploaded anything yet.' : 'Your feed shows items from friends. Find people to follow!'}</p>
+    </div>`;
     return;
   }
   grid.innerHTML = allItems.map(item => cardHTML(item, item.user_id === currentSupaUser?.id || (!item.isOther && myItems.some(i => i.id === item.id)))).join('');
@@ -2270,8 +2273,10 @@ function cardHTML(item, isOwn) {
     <div class="feed-card" onclick="openItemDetail('${item.id || item.localId}')">
       <div class="feed-card-img">${thumbContent}</div>
       <div class="feed-card-body">
-        <div class="feed-card-user">
-          <div class="avatar-xs" style="background:${item.ownerColor||'#2DD4BF'}">${item.ownerAvatar||'h'}</div>
+        <div class="feed-card-user" ${item.user_id && item.user_id !== currentSupaUser?.id ? `onclick="event.stopPropagation();openUserProfile('${item.user_id}')" style="cursor:pointer;"` : ''}>
+          ${item.ownerAvatarUrl
+            ? `<img src="${item.ownerAvatarUrl}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+            : `<div class="avatar-xs" style="background:${item.ownerColor||'#2DD4BF'}">${item.ownerAvatar||'?'}</div>`}
           <span class="feed-card-username">${item.owner||userName||''}</span>
         </div>
         <div class="feed-card-title">${item.title}</div>
@@ -2491,13 +2496,13 @@ function renderExplore() {
   const sort = document.getElementById('explore-sort')?.value || 'newest';
   const friendIds = new Set(friends.map(f => f.id));
 
-  const pool = otherItems.length > 0 ? otherItems : sampleItems;
+  const pool = otherItems;
   let allItems = [...pool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar:(userName||'h')[0].toLowerCase(), ownerColor:'#2DD4BF'}))];
 
   // Filter: friends-only items only visible to friends
   allItems = allItems.filter(item => {
     if (item.visibility === 'private' && item.user_id !== currentSupaUser?.id) return false;
-    if ((item.visibility === 'friends' || item.visibility === 'all') && item.user_id !== currentSupaUser?.id && !friendIds.has(item.user_id)) return false;
+    if (item.user_id !== currentSupaUser?.id && !friendIds.has(item.user_id)) return false;
     if (item.visibility === 'group') {
       if (item.user_id === currentSupaUser?.id) return true; // owner always sees
       const grp = visGroups.find(g => g.id === item.group_id);
@@ -2589,8 +2594,10 @@ function openItemDetail(id) {
       </div>
       <p class="item-detail-desc">${esc(item.desc || '')}</p>
       <div class="item-detail-owner">
-        <div class="avatar-xs" style="width:32px;height:32px;font-size:14px;background:${esc(item.ownerColor||'#2DD4BF')}">${esc(item.ownerAvatar||'h')}</div>
-        <p>Added by <strong>${esc(item.owner||userName||'')}</strong></p>
+        ${item.ownerAvatarUrl
+          ? `<img src="${item.ownerAvatarUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+          : `<div class="avatar-xs" style="width:32px;height:32px;font-size:14px;background:${esc(item.ownerColor||'#2DD4BF')}">${esc(item.ownerAvatar||'?')}</div>`}
+        <p style="cursor:${item.user_id && item.user_id !== currentSupaUser?.id ? 'pointer' : 'default'};" onclick="${item.user_id && item.user_id !== currentSupaUser?.id ? `openUserProfile('${item.user_id}')` : ''}">Added by <strong>${esc(item.owner||userName||'')}</strong></p>
       </div>
     </div>
     ${item.affiliate ? `
@@ -3810,7 +3817,7 @@ function renderFriendRequests() {
           <div style="font-weight:700;font-size:14px;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
           <div style="font-size:12px;color:var(--gray-500);">${p.handle}</div>
         </div>
-        <button onclick="cancelFriendRequest('${p.id}', '${p.name}')" style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--gray-300);background:transparent;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="cancelFriendRequest('${p.id}')" style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--gray-300);background:transparent;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
       </div>`;
     }).join('');
   }
@@ -5946,20 +5953,19 @@ async function saveProfile() {
   const rawEditHandle = (document.getElementById('edit-handle')?.value.trim() || userHandle).replace('@','').toLowerCase().replace(/[^a-z0-9_.]/g,'');
   const newHandle = '@' + rawEditHandle;
 
-  // If handle changed, block if taken (live check result) or recheck
+  // ALWAYS do a hard server check on handle — never rely solely on debounce
   if (newHandle !== userHandle) {
-    if (_handleAvailable === false) {
-      showToast('That username is already taken ✕');
-      return;
-    }
-    // Final server check just in case
+    const statusEl = document.getElementById('handle-status');
+    if (statusEl) { statusEl.textContent = 'Checking…'; statusEl.style.color = 'var(--gray-400)'; }
     const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', newHandle).maybeSingle();
     if (taken && taken.id !== currentSupaUser?.id) {
       showToast('That username is already taken ✕');
-      document.getElementById('handle-status').textContent = '✕ Already taken';
-      document.getElementById('handle-status').style.color = '#f43f5e';
+      if (statusEl) { statusEl.textContent = '✕ Already taken'; statusEl.style.color = '#f43f5e'; }
+      _handleAvailable = false;
       return;
     }
+    _handleAvailable = true;
+    if (statusEl) { statusEl.textContent = '✓ Available'; statusEl.style.color = '#10b981'; }
   }
   userHandle = newHandle;
   
@@ -6818,6 +6824,8 @@ function showAuthError(screen, msg) {
         appEntered = false;
         currentSupaUser = null;
         currentProfile = null;
+        // Clean up realtime subscriptions
+        try { _supaClient.removeAllChannels(); } catch(e) {}
         showAuthScreen('login');
       }
     });
