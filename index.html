@@ -2181,7 +2181,10 @@ function showScreen(name) {
   });
 
   // Per-screen render hooks
-  if (name === 'home')        renderFeed();
+  if (name === 'home') {
+    // Reload other items to pick up latest avatars/profile changes
+    loadOtherItems().then(() => renderFeed()).catch(() => renderFeed());
+  }
   if (name === 'explore')     renderExplore();
   if (name === 'wardrobe')    renderWardrobe();
   if (name !== 'qr' && _qrStream) stopQRScan();
@@ -5906,7 +5909,7 @@ async function checkHandleAvailability(val) {
   status.style.color = 'var(--gray-400)';
   clearTimeout(_handleCheckTimer);
   _handleCheckTimer = setTimeout(async () => {
-    const { data } = await _supaClient.from('profiles').select('id').eq('handle', handle).maybeSingle();
+    const { data } = await _supaClient.from('profiles').select('id').ilike('handle', handle).maybeSingle();
     if (data && data.id !== currentSupaUser?.id) {
       status.textContent = '✕ Already taken';
       status.style.color = '#f43f5e';
@@ -5957,7 +5960,7 @@ async function saveProfile() {
   if (newHandle !== userHandle) {
     const statusEl = document.getElementById('handle-status');
     if (statusEl) { statusEl.textContent = 'Checking…'; statusEl.style.color = 'var(--gray-400)'; }
-    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', newHandle).maybeSingle();
+    const { data: taken } = await _supaClient.from('profiles').select('id').ilike('handle', newHandle).maybeSingle();
     if (taken && taken.id !== currentSupaUser?.id) {
       showToast('That username is already taken ✕');
       if (statusEl) { statusEl.textContent = '✕ Already taken'; statusEl.style.color = '#f43f5e'; }
@@ -6109,7 +6112,7 @@ async function saveProfileToDB(user, name, handle, email) {
     await _supaClient.from('profiles').upsert({
       id: user.id,
       display_name: name,
-      handle: handle,
+      handle: handle.toLowerCase(), // always store lowercase
       email: email,
       created_at: new Date().toISOString()
     });
@@ -6623,7 +6626,7 @@ async function doSignup() {
     const { data: existingHandle } = await _supaClient
       .from('profiles')
       .select('id')
-      .eq('handle', cleanHandle)
+      .ilike('handle', cleanHandle)
       .maybeSingle();
     if (existingHandle) { showAuthError('signup', 'That username is already taken — try another'); btn.textContent = 'Create Account'; btn.style.opacity = '1'; btn.disabled = false; return; }
 
