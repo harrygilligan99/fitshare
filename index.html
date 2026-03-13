@@ -685,7 +685,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   </div>
   <div class="nav-item" onclick="showScreen(&#39;wardrobe&#39;)" id="nav-wardrobe">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
   </div>
   <div class="nav-item" onclick="showScreen(&#39;settings&#39;)" id="nav-settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
@@ -793,6 +793,7 @@
     <div style="display:flex;gap:2px;">
       <div class="topbar-icon" id="msg-bell-home" onclick="showScreen(&#39;messages&#39;)" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+        <div id="msg-unread-badge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
       </div>
       <div class="topbar-icon notif-dot" id="notif-bell-home" onclick="showScreen(&#39;notifications&#39;)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
@@ -969,12 +970,16 @@
     <!-- Collections tab row -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;">
       <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--gray-200);">
-        <button id="wtab-collections" onclick="setWardrobeTab('collections')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--black);color:white;">Collections</button>
-        <button id="wtab-all" onclick="setWardrobeTab('all')" style="padding:7px 16px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);">All</button>
+        <button id="wtab-collections" onclick="setWardrobeTab('collections')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--black);color:white;">Collections</button>
+        <button id="wtab-all" onclick="setWardrobeTab('all')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);">All</button>
+        <button id="wtab-liked" onclick="setWardrobeTab('liked')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);display:flex;align-items:center;gap:4px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          Liked
+        </button>
       </div>
       <button onclick="openCreateCollection()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray-700);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        New Collection
+        New
       </button>
     </div>
 
@@ -990,6 +995,15 @@
     <!-- Collections view -->
     <div id="wardrobe-collections-view" style="display:block;padding:12px 16px;">
       <div id="collections-grid"></div>
+    </div>
+
+    <!-- Liked items view -->
+    <div id="wardrobe-liked-view" style="display:none;">
+      <div class="feed-grid" id="wardrobe-liked-grid"></div>
+      <div id="wardrobe-liked-empty" class="empty-state" style="display:flex;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <p>Nothing liked yet.<br>Heart items you love to save them here!</p>
+      </div>
     </div>
   </div>
 </div>
@@ -2224,8 +2238,10 @@ function renderFeed() {
   // Enforce visibility: private=never, friends=friends only, all=everyone
   const filteredPool = friendPool.filter(item => {
     if (item.visibility === 'private') return false;
-    if (item.visibility === 'friends' && !friendIds.has(item.user_id)) return false;
-    // 'all' = show to everyone, undefined = treat as all
+    // 'all' = show to everyone (including non-friends)
+    if (item.visibility === 'all') return true;
+    // 'friends' or undefined (treat as friends) = only show to mutual friends
+    if (!friendIds.has(item.user_id)) return false;
     return true;
   });
   const allItems = [...filteredPool, ...myItems.map(i => ({...i, owner: userName||'me', ownerAvatar: (userName||'h')[0].toLowerCase(), ownerColor: '#2DD4BF'}))];
@@ -2552,7 +2568,7 @@ function openItemDetail(id) {
     <div class="item-detail-body">
       <div class="item-detail-header">
         <h2>${esc(item.title)}</h2>
-        <button class="like-btn ${item.liked?'liked':''}" onclick="toggleLike(${id})" style="font-size:14px;gap:5px;">
+        <button class="like-btn ${item.liked?'liked':''}" onclick="toggleLike('${id}')" style="font-size:14px;gap:5px;">
           <svg viewBox="0 0 24 24" fill="${item.liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           ${item.likes}
         </button>
@@ -3043,9 +3059,14 @@ function setWardrobeTab(tab) {
   document.getElementById('wtab-all').style.color = tab==='all' ? 'white' : 'var(--gray-500)';
   document.getElementById('wtab-collections').style.background = tab==='collections' ? 'var(--black)' : 'white';
   document.getElementById('wtab-collections').style.color = tab==='collections' ? 'white' : 'var(--gray-500)';
+  const likedBtn = document.getElementById('wtab-liked');
+  if (likedBtn) { likedBtn.style.background = tab==='liked' ? 'var(--black)' : 'white'; likedBtn.style.color = tab==='liked' ? 'white' : 'var(--gray-500)'; }
   document.getElementById('wardrobe-all-view').style.display = tab==='all' ? '' : 'none';
   document.getElementById('wardrobe-collections-view').style.display = tab==='collections' ? '' : 'none';
+  const likedView = document.getElementById('wardrobe-liked-view');
+  if (likedView) likedView.style.display = tab==='liked' ? '' : 'none';
   if (tab === 'collections') renderCollections();
+  if (tab === 'liked') renderWardrobeLikedTab();
 }
 
 function renderCollections() {
@@ -3194,13 +3215,72 @@ function deleteItem(localId) {
 // ==========================================
 // LIKES
 // ==========================================
-function toggleLike(id) {
+let likedItemIds = new Set(); // persisted liked item IDs
+
+// NOTE: requires this SQL in Supabase:
+// CREATE TABLE IF NOT EXISTS item_likes (
+//   user_id uuid references auth.users(id) on delete cascade,
+//   item_id uuid references items(id) on delete cascade,
+//   created_at timestamptz default now(),
+//   primary key (user_id, item_id)
+// );
+// ALTER TABLE item_likes ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "Users manage own likes" ON item_likes FOR ALL TO authenticated USING (auth.uid()=user_id);
+// Also add likes column to items: ALTER TABLE items ADD COLUMN IF NOT EXISTS likes int DEFAULT 0;
+
+async function loadLikedItems() {
+  if (!currentSupaUser || !_supaClient) return;
+  try {
+    const { data, error } = await _supaClient
+      .from('item_likes')
+      .select('item_id')
+      .eq('user_id', currentSupaUser.id);
+    if (error) { console.warn('[Likes] table may not exist yet:', error.message); return; }
+    likedItemIds = new Set((data || []).map(r => r.item_id));
+    // Sync liked state onto loaded items
+    [...myItems, ...otherItems].forEach(item => {
+      const id = item.id || item.localId;
+      if (id) item.liked = likedItemIds.has(id);
+    });
+  } catch(e) {
+    console.warn('[Likes] loadLikedItems error:', e);
+  }
+}
+
+async function toggleLike(id) {
+  if (!currentSupaUser) { showToast('Log in to like items'); return; }
   const item = getItemById(id);
   if (!item) return;
-  item.liked = !item.liked;
-  item.likes += item.liked ? 1 : -1;
+  const wasLiked = likedItemIds.has(id);
+  // Optimistic update
+  item.liked = !wasLiked;
+  item.likes = Math.max(0, (item.likes || 0) + (wasLiked ? -1 : 1));
+  if (wasLiked) { likedItemIds.delete(id); } else { likedItemIds.add(id); }
   renderFeed(); renderExplore();
   if (currentScreen === 'item-detail') openItemDetail(id);
+  renderWardrobeLikedTab();
+  if (currentScreen === 'user-profile' && _viewingUserId) _renderUserProfileTab(document.querySelector('#uptab-liked.active') ? 'liked' : 'all', _viewingUserId);
+  try {
+    if (wasLiked) {
+      await _supaClient.from('item_likes').delete()
+        .eq('user_id', currentSupaUser.id).eq('item_id', id);
+    } else {
+      await _supaClient.from('item_likes').upsert(
+        { user_id: currentSupaUser.id, item_id: id },
+        { onConflict: 'user_id,item_id' }
+      );
+      // Also update likes count on items table
+      await _supaClient.from('items').update({ likes: item.likes })
+        .eq('id', id);
+    }
+  } catch(e) {
+    // Rollback optimistic update on error
+    item.liked = wasLiked;
+    item.likes = Math.max(0, (item.likes || 0) + (wasLiked ? 1 : -1));
+    if (wasLiked) { likedItemIds.add(id); } else { likedItemIds.delete(id); }
+    renderFeed(); renderExplore();
+    console.warn('[Likes] toggleLike error:', e);
+  }
 }
 
 // ==========================================
@@ -3213,6 +3293,26 @@ function updateNotifBells() {
     if (!el) return;
     el.classList.toggle('has-notif', count > 0);
   });
+}
+
+function updateMessagesBadge() {
+  const unreadCount = threads.filter(t => t.unread).length;
+  const badge = document.getElementById('msg-unread-badge');
+  if (badge) badge.style.display = unreadCount > 0 ? 'block' : 'none';
+}
+
+function renderWardrobeLikedTab() {
+  const el = document.getElementById('wardrobe-liked-grid');
+  if (!el) return;
+  const liked = [...myItems, ...otherItems].filter(i => i.liked);
+  const emptyEl = document.getElementById('wardrobe-liked-empty');
+  if (liked.length === 0) {
+    el.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'flex';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  el.innerHTML = liked.map(item => cardHTML(item, false)).join('');
 }
 
 function renderNotifications() {
@@ -3413,6 +3513,8 @@ async function loadBorrowRequests() {
     renderBorrowRequests();
     renderInbox();
     renderNotifications();
+    updateNotifBells();
+    updateMessagesBadge();
   }
 }
 
@@ -3686,78 +3788,212 @@ async function cancelFriendRequest(userId) {
   await loadFriends();
 }
 
-function openUserProfile(userId) {
-  // Find profile data — from friends list, search results, or otherItems owners
-  const friend = friends.find(f => f.id === userId)
-    || incomingRequests.find(r => r.id === userId)
-    || sentRequests.find(r => r.id === userId);
+// Stores the userId currently viewed on user-profile screen
+let _viewingUserId = null;
 
-  // Build profile screen content
-  const name = friend?.name || 'User';
-  const handle = friend?.handle || '';
-  const color = friend?.color || '#2DD4BF';
-  const avatarUrl = friend?.avatarUrl || null;
-  const avatarContent = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-    : `<span style="font-size:28px;font-weight:800;color:white;">${name[0]?.toUpperCase()||'U'}</span>`;
+async function openUserProfile(userId) {
+  _viewingUserId = userId;
 
-  // Their items
-  const theirItems = otherItems.filter(i => i.user_id === userId);
-  const isFollowing = friends.some(f => f.id === userId);
-
-  const itemsHTML = theirItems.length > 0
-    ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 24px;">
-        ${theirItems.map(item => `
-          <div style="border-radius:14px;overflow:hidden;background:var(--card-bg);border:1px solid var(--gray-200);cursor:pointer;" onclick="openItemDetail('${item.id}')">
-            <div style="aspect-ratio:3/4;background:var(--gray-100);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-              ${item.imageData ? `<img src="${item.imageData}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:36px;">${item.emoji||'👕'}</span>`}
-            </div>
-            <div style="padding:8px 10px;">
-              <div style="font-size:13px;font-weight:600;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-              <div style="font-size:11px;color:var(--gray-500);">Size ${item.size}</div>
-            </div>
-          </div>`).join('')}
-      </div>`
-    : `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);">
-        <div style="font-size:36px;margin-bottom:8px;">👗</div>
-        <div style="font-size:13px;">No items shared yet</div>
-      </div>`;
-
-  const profileScreen = document.getElementById('screen-user-profile');
+  // Ensure screen exists
+  let profileScreen = document.getElementById('screen-user-profile');
   if (!profileScreen) {
-    // Create the screen if it doesn't exist
     const div = document.createElement('div');
     div.className = 'screen';
     div.id = 'screen-user-profile';
     div.style.cssText = 'padding:0;overflow-y:auto;';
     document.body.appendChild(div);
+    profileScreen = div;
   }
 
-  document.getElementById('screen-user-profile').innerHTML = `
+  // Get known profile data immediately (from friends/requests/items owners)
+  let knownProfile = friends.find(f => f.id === userId)
+    || incomingRequests.find(r => r.id === userId)
+    || sentRequests.find(r => r.id === userId);
+
+  // Also try from otherItems owners
+  if (!knownProfile) {
+    const ownerItem = otherItems.find(i => i.user_id === userId);
+    if (ownerItem) {
+      knownProfile = { name: ownerItem.owner, handle: ownerItem.ownerHandle || '', color: ownerItem.ownerColor, avatarUrl: ownerItem.ownerAvatarUrl || null };
+    }
+  }
+
+  const name = knownProfile?.name || 'User';
+  const handle = knownProfile?.handle || '';
+  const color = knownProfile?.color || '#2DD4BF';
+  const avatarUrl = knownProfile?.avatarUrl || null;
+  const isFollowing = friends.some(f => f.id === userId);
+
+  // Render shell immediately
+  profileScreen.innerHTML = _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, 'all');
+  showScreen('user-profile');
+
+  // Fetch real profile from Supabase if not already known
+  if (!knownProfile?.handle) {
+    try {
+      const { data: prof } = await _supaClient.from('profiles').select('display_name,handle,avatar_color,avatar_url').eq('id', userId).single();
+      if (prof && _viewingUserId === userId) {
+        const n2 = prof.display_name || 'User';
+        const h2 = prof.handle || '';
+        profileScreen.innerHTML = _buildUserProfileHTML(userId, n2, h2, prof.avatar_color || color, prof.avatar_url || null, isFollowing, 'all');
+        _renderUserProfileTab('all', userId);
+      }
+    } catch(e) { console.warn('openUserProfile fetch:', e); }
+  }
+
+  _renderUserProfileTab('all', userId);
+}
+
+function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, activeTab) {
+  const avatarContent = avatarUrl
+    ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : `<span style="font-size:28px;font-weight:800;color:white;">${esc(name[0]?.toUpperCase()||'U')}</span>`;
+
+  const theirItems = otherItems.filter(i => i.user_id === userId);
+  const theirLikedItems = [...myItems, ...otherItems].filter(i => likedItemIds.has(i.id || i.localId) && i.user_id === userId);
+
+  // Build collections from their items
+  const colMap = {};
+  theirItems.forEach(item => {
+    if (item.boards && item.boards.length) {
+      item.boards.forEach(b => {
+        if (!colMap[b]) colMap[b] = [];
+        colMap[b].push(item);
+      });
+    }
+  });
+  const hasCollections = Object.keys(colMap).length > 0;
+
+  return `
     <div style="position:sticky;top:0;z-index:10;background:var(--topbar-bg);border-bottom:1px solid var(--gray-200);padding:14px 16px;display:flex;align-items:center;gap:12px;">
       <button onclick="goBack()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--black);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:22px;height:22px;"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <span style="font-size:16px;font-weight:800;color:var(--black);">${esc(handle) || esc(name)}</span>
+      <span style="font-size:16px;font-weight:800;color:var(--black);">${esc(handle || name)}</span>
     </div>
+
     <div style="padding:24px 16px 16px;display:flex;align-items:center;gap:16px;">
-      <div style="width:72px;height:72px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${avatarContent}</div>
-      <div>
+      <div style="width:76px;height:76px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${avatarContent}</div>
+      <div style="flex:1;">
         <div style="font-size:18px;font-weight:800;color:var(--black);">${esc(name)}</div>
         <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">${esc(handle)}</div>
-        <div style="margin-top:10px;">
-          <button onclick="event.stopPropagation();toggleFollow('${userId}','${esc(name)}',this)" class="btn-add-friend ${isFollowing?'following':''}" style="padding:8px 20px;font-size:13px;">
-            ${isFollowing ? 'Friends ✓' : 'Add Friend'}
-          </button>
+        <div style="display:flex;gap:16px;margin-top:8px;">
+          <div style="text-align:center;"><div style="font-size:16px;font-weight:800;color:var(--black);">${theirItems.length}</div><div style="font-size:11px;color:var(--gray-500);">Items</div></div>
         </div>
       </div>
+      <div>
+        <button onclick="event.stopPropagation();toggleFollow('${userId}','${esc(name)}',this)" class="btn-add-friend ${isFollowing?'following':''}" style="padding:8px 18px;font-size:13px;">
+          ${isFollowing ? 'Friends ✓' : 'Add Friend'}
+        </button>
+      </div>
     </div>
-    <div style="padding:0 16px 8px;border-top:1px solid var(--gray-100);padding-top:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:12px;">${theirItems.length} item${theirItems.length!==1?'s':''}</div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1.5px solid var(--gray-200);padding:0 16px;gap:0;">
+      <button id="uptab-all" onclick="_renderUserProfileTab('all','${userId}')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='all'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='all'?700:500};color:${activeTab==='all'?'var(--black)':'var(--gray-500)'};cursor:pointer;transition:all 0.15s;">
+        All items
+      </button>
+      <button id="uptab-collections" onclick="_renderUserProfileTab('collections','${userId}')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='collections'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='collections'?700:500};color:${activeTab==='collections'?'var(--black)':'var(--gray-500)'};cursor:pointer;transition:all 0.15s;">
+        Collections
+      </button>
+      <button id="uptab-liked" onclick="_renderUserProfileTab('liked','${userId}')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='liked'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='liked'?700:500};color:${activeTab==='liked'?'var(--black)':'var(--gray-500)'};cursor:pointer;display:flex;align-items:center;gap:4px;">
+        <svg viewBox="0 0 24 24" fill="${activeTab==='liked'?'var(--red)':'none'}" stroke="${activeTab==='liked'?'var(--red)':'var(--gray-500)'}" stroke-width="2" style="width:13px;height:13px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Liked
+      </button>
     </div>
-    ${itemsHTML}
+
+    <div id="user-profile-tab-content" style="padding-bottom:24px;"></div>
   `;
-  showScreen('user-profile');
+}
+
+function _renderUserProfileTab(tab, userId) {
+  _viewingUserId = userId;
+  const content = document.getElementById('user-profile-tab-content');
+  if (!content) return;
+
+  // Update tab styles
+  ['all','collections','liked'].forEach(t => {
+    const btn = document.getElementById('uptab-' + t);
+    if (!btn) return;
+    const active = t === tab;
+    btn.style.fontWeight = active ? '700' : '500';
+    btn.style.color = active ? 'var(--black)' : 'var(--gray-500)';
+    btn.style.borderBottom = active ? '2.5px solid var(--black)' : '2.5px solid transparent';
+    if (t === 'liked') {
+      const svg = btn.querySelector('svg');
+      if (svg) { svg.setAttribute('fill', active ? 'var(--red)' : 'none'); svg.setAttribute('stroke', active ? 'var(--red)' : 'var(--gray-500)'); }
+    }
+  });
+
+  const theirItems = otherItems.filter(i => i.user_id === userId);
+
+  if (tab === 'all') {
+    if (theirItems.length === 0) {
+      content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">👗</div><div style="font-size:13px;">No items shared yet</div></div>`;
+      return;
+    }
+    content.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 0;">
+      ${theirItems.map(item => _userProfileItemCard(item)).join('')}
+    </div>`;
+    return;
+  }
+
+  if (tab === 'collections') {
+    // Build collections from boards field
+    const colMap = {};
+    theirItems.forEach(item => {
+      const boards = item.boards || [];
+      boards.forEach(b => { if (!colMap[b]) colMap[b] = []; colMap[b].push(item); });
+    });
+    const cols = Object.entries(colMap);
+    if (cols.length === 0) {
+      content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">📦</div><div style="font-size:13px;">No collections yet</div></div>`;
+      return;
+    }
+    content.innerHTML = `<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:20px;">
+      ${cols.map(([colName, items]) => `
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--black);margin-bottom:10px;">${esc(colName)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            ${items.map(item => _userProfileItemCard(item)).join('')}
+          </div>
+        </div>`).join('')}
+    </div>`;
+    return;
+  }
+
+  if (tab === 'liked') {
+    // Show items this person has liked (items in likedItemIds that belong to userId)
+    // We can't know who liked what without a DB call, so show items the viewer has liked FROM this person
+    const likedFromThem = theirItems.filter(i => likedItemIds.has(i.id || i.localId));
+    if (likedFromThem.length === 0) {
+      content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">❤️</div><div style="font-size:13px;">You haven't liked any of their items yet</div></div>`;
+      return;
+    }
+    content.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 0;">
+      ${likedFromThem.map(item => _userProfileItemCard(item)).join('')}
+    </div>`;
+    return;
+  }
+}
+
+function _userProfileItemCard(item) {
+  const liked = likedItemIds.has(item.id || item.localId);
+  return `<div style="border-radius:14px;overflow:hidden;background:var(--card-bg);border:1px solid var(--gray-200);cursor:pointer;position:relative;" onclick="openItemDetail('${item.id}')">
+    <div style="aspect-ratio:3/4;background:var(--gray-100);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      ${item.imageData ? `<img src="${item.imageData}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:36px;">${item.emoji||'👕'}</span>`}
+    </div>
+    <button onclick="event.stopPropagation();toggleLike('${item.id}')" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.85);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);">
+      <svg viewBox="0 0 24 24" fill="${liked?'#ef4444':'none'}" stroke="${liked?'#ef4444':'#666'}" stroke-width="2" style="width:14px;height:14px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    </button>
+    <div style="padding:8px 10px;">
+      <div style="font-size:13px;font-weight:600;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(item.title)}</div>
+      <div style="font-size:11px;color:var(--gray-500);">Size ${esc(item.size)}</div>
+    </div>
+  </div>`;
 }
 
 async function unfollowFriend(userId, btn) {
@@ -4898,6 +5134,7 @@ function openThread(threadId) {
   currentThread = threads.find(t => t.id === threadId);
   if (!currentThread) return;
   currentThread.unread = false;
+  updateMessagesBadge();
   const item = getItemById(currentThread.itemId);
   document.getElementById('chat-partner-name').textContent = currentThread.partner;
   document.getElementById('chat-item-label').textContent = currentThread.itemTitle;
@@ -5788,16 +6025,27 @@ async function loadProfile(user) {
     console.warn('loadProfile select failed:', e);
   }
 
-  // No profile in DB yet \u2014 use pendingProfile, auth metadata, or email fallback
+  // No profile in DB yet — use pendingProfile, auth metadata, or email fallback
   const meta = user.user_metadata || {};
   const name = pendingProfile?.display_name || meta.display_name || user.email.split('@')[0];
-  const handle = pendingProfile?.handle || meta.handle || '@' + name.replace(/\s+/g,'').toLowerCase();
+  let baseHandle = pendingProfile?.handle || meta.handle || '@' + name.replace(/\s+/g,'').toLowerCase().replace(/[^a-z0-9_.]/g,'');
   const email = pendingProfile?.email || user.email;
   pendingProfile = null;
 
-  const newProfile = { id: user.id, display_name: name, handle, email };
+  // Ensure handle uniqueness — append number if taken
+  let finalHandle = baseHandle;
+  let suffix = 1;
+  while (true) {
+    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', finalHandle).maybeSingle();
+    if (!taken) break; // available
+    finalHandle = baseHandle + suffix;
+    suffix++;
+    if (suffix > 99) { finalHandle = baseHandle + Date.now().toString().slice(-4); break; }
+  }
+
+  const newProfile = { id: user.id, display_name: name, handle: finalHandle, email };
   // Try to save it now that we have a real session
-  await saveProfileToDB(user, name, handle, email);
+  await saveProfileToDB(user, name, finalHandle, email);
   currentProfile = newProfile;
   applyProfileToUI(currentProfile);
 }
@@ -5888,7 +6136,7 @@ async function loadOtherItems() {
   if (!currentSupaUser) return;
   const { data, error } = await _supaClient
     .from('items')
-    .select('*, profiles(display_name, handle, avatar_color)')
+    .select('*, profiles(display_name, handle, avatar_color, avatar_url)')
     .neq('user_id', currentSupaUser.id)
     .order('created_at', { ascending: false })
     .limit(60);
@@ -5910,10 +6158,20 @@ async function loadOtherItems() {
         ownerAvatar: name[0]?.toUpperCase() || 'U',
         ownerColor: profile.avatar_color || '#2DD4BF',
         ownerHandle: profile.handle || '@user',
-        likes: 0, liked: false, requested: false,
+        ownerAvatarUrl: profile.avatar_url || null,
+        user_id: row.user_id,
+        boards: row.boards || [],
+        visibility: row.visibility || 'friends',
+        likes: row.likes || 0,
+        liked: likedItemIds.has(row.id),
+        requested: false,
         affiliate: null,
         isOther: true
       };
+    });
+    // Re-sync liked state now that items are loaded
+    otherItems.forEach(item => {
+      if (item.id) item.liked = likedItemIds.has(item.id);
     });
     renderFeed();
     renderExplore();
@@ -5945,10 +6203,14 @@ async function enterApp() {
   } else if (urlParams.get('plus') === 'cancelled') {
     window.history.replaceState({}, '', window.location.pathname);
   }
-  await loadMyItems();
-  loadOtherItems();    // non-blocking
-  loadFriends();       // non-blocking
-  loadBorrowRequests(); // non-blocking
+  // Load all data in parallel, wait for everything before rendering
+  await Promise.all([
+    loadMyItems(),
+    loadOtherItems(),
+    loadFriends(),
+    loadBorrowRequests(),
+    loadLikedItems()
+  ]);
 
   // Show bottom nav now that user is authenticated
   document.getElementById('bottom-nav').style.display = 'flex';
@@ -5965,7 +6227,11 @@ async function enterApp() {
   renderBorrowedTracker();
   renderCalendar();
   renderInbox();
+  renderNotifications();
   renderThemeGrid();
+  renderWardrobeLikedTab();
+  updateNotifBells();
+  updateMessagesBadge();
   // Start onboarding for new users (delayed so UI is painted)
   setTimeout(startOnboarding, 600);
   // Set up real-time subscriptions
@@ -6324,7 +6590,7 @@ async function saveItemToSupabase(item) {
     description: item.desc ? item.desc.substring(0, 500) : null,
     image_url: item.imageData || null,
     emoji: item.emoji || '\uD83D\uDC55',
-    visibility: item.visibility || 'all',
+    visibility: item.visibility || 'friends',
     created_at: new Date().toISOString()
   };
   const { data, error } = await _supaClient.from('items').insert(row).select().single();
