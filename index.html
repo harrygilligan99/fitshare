@@ -1039,7 +1039,16 @@
       <h3 style="font-size:18px;font-weight:700;" id="create-collection-title">New Collection</h3>
       <button onclick="document.getElementById('create-collection-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
     </div>
-    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">Emoji</div>
+    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:10px;">Cover</div>
+    <!-- Cover preview + upload -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div id="col-cover-preview" onclick="document.getElementById('col-cover-upload').click()" style="width:64px;height:64px;border-radius:14px;background:var(--gray-100);border:2px dashed var(--gray-300);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;overflow:hidden;flex-shrink:0;" title="Tap to upload photo">📁</div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;">Tap cover to upload a photo, or pick an emoji below</div>
+        <input type="file" id="col-cover-upload" accept="image/*" style="display:none;" onchange="onCollectionCoverUpload(this)">
+        <button onclick="clearCollectionCover()" id="col-cover-clear" style="display:none;font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid var(--gray-200);background:none;cursor:pointer;color:var(--gray-500);">✕ Remove photo</button>
+      </div>
+    </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="collection-emoji-picker">
       <span onclick="selectCollectionEmoji(this)" data-emoji="👗" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">👗</span>
       <span onclick="selectCollectionEmoji(this)" data-emoji="☀️" style="font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;">☀️</span>
@@ -3052,6 +3061,7 @@ function renderWardrobe() {
 let collections = JSON.parse(localStorage.getItem('fs_collections') || '[]');
 let currentCollectionId = null;
 let selectedCollectionEmoji = '\uD83D\uDCC1';
+let selectedCollectionCover = null;
 let editingCollectionId = null;
 
 function setWardrobeTab(tab) {
@@ -3078,15 +3088,22 @@ function renderCollections() {
   el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
     collections.map(b => {
       const items = myItems.filter(i => (i.boards||[]).includes(b.id));
-      const thumbs = items.slice(0,4).map(i => i.imageData
-        ? `<img src="${i.imageData}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--gray-100);">${i.emoji||'\uD83D\uDC57'}</div>`
-      );
-      const grid4 = [0,1,2,3].map(idx => `<div style="flex:1;min-width:0;aspect-ratio:1;overflow:hidden;">${thumbs[idx]||'<div style="width:100%;height:100%;background:var(--gray-100);"></div>'}</div>`).join('');
-      return `<div onclick="openCollection('${b.id}')" style="border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <div style="display:flex;flex-wrap:wrap;">${grid4}</div>
-        <div style="padding:10px 12px;background:white;">
-          <div style="font-size:14px;">${b.emoji} <strong>${esc(b.name)}</strong></div>
+      // If collection has a custom cover photo, show it full-width; otherwise show 4-grid of items
+      let coverHtml;
+      if (b.cover) {
+        coverHtml = `<div style="width:100%;aspect-ratio:1.4;overflow:hidden;"><img src="${b.cover}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+      } else {
+        const thumbs = items.slice(0,4).map(i => i.imageData
+          ? `<div style="aspect-ratio:1;overflow:hidden;"><img src="${i.imageData}" style="width:100%;height:100%;object-fit:cover;"></div>`
+          : `<div style="aspect-ratio:1;overflow:hidden;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px;">${i.emoji||'\uD83D\uDC57'}</div>`
+        );
+        const empties = Array(Math.max(0,4-thumbs.length)).fill('<div style="aspect-ratio:1;background:var(--gray-100);"></div>');
+        coverHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;">${[...thumbs,...empties].slice(0,4).join('')}</div>`;
+      }
+      return `<div onclick="openCollection('${b.id}')" style="border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid var(--gray-100);">
+        ${coverHtml}
+        <div style="padding:10px 12px;background:var(--card-bg);">
+          <div style="font-size:14px;font-weight:700;">${b.emoji} ${esc(b.name)}</div>
           <div style="font-size:11px;color:var(--gray-500);">${items.length} item${items.length!==1?'s':''}</div>
         </div>
       </div>`;
@@ -3098,7 +3115,12 @@ function openCollection(boardId) {
   if (!b) return;
   currentCollectionId = boardId;
   document.getElementById('collection-title-bar').textContent = b.name;
-  document.getElementById('collection-emoji-display').textContent = b.emoji;
+  const covEl = document.getElementById('collection-emoji-display');
+  if (b.cover) {
+    covEl.innerHTML = `<img src="${b.cover}" style="width:56px;height:56px;border-radius:12px;object-fit:cover;">`;
+  } else {
+    covEl.textContent = b.emoji;
+  }
   document.getElementById('collection-name-display').textContent = b.name;
   const items = myItems.filter(i => (i.boards||[]).includes(boardId));
   document.getElementById('collection-count-display').textContent = items.length + ' item' + (items.length!==1?'s':'');
@@ -3133,17 +3155,62 @@ function openCreateCollection() {
   document.getElementById('add-to-collection-modal').classList.remove('open');
   editingCollectionId = null;
   selectedCollectionEmoji = '\uD83D\uDCC1';
+  selectedCollectionCover = null;
   document.getElementById('collection-name-input').value = '';
   document.getElementById('create-collection-title').textContent = 'New Collection';
   document.getElementById('save-collection-btn').textContent = 'Create Collection';
   document.querySelectorAll('#collection-emoji-picker span').forEach(s => s.style.borderColor = s.dataset.emoji === '\uD83D\uDCC1' ? 'var(--black)' : 'transparent');
+  // Reset cover preview
+  const prev = document.getElementById('col-cover-preview');
+  if (prev) { prev.innerHTML = '\uD83D\uDCC1'; prev.style.backgroundImage = ''; prev.style.backgroundSize = ''; }
+  const clr = document.getElementById('col-cover-clear');
+  if (clr) clr.style.display = 'none';
+  const inp = document.getElementById('col-cover-upload');
+  if (inp) inp.value = '';
   document.getElementById('create-collection-modal').classList.add('open');
+}
+
+function onCollectionCoverUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedCollectionCover = e.target.result;
+    const prev = document.getElementById('col-cover-preview');
+    if (prev) {
+      prev.innerHTML = '';
+      prev.style.backgroundImage = `url(${selectedCollectionCover})`;
+      prev.style.backgroundSize = 'cover';
+      prev.style.backgroundPosition = 'center';
+    }
+    const clr = document.getElementById('col-cover-clear');
+    if (clr) clr.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCollectionCover() {
+  selectedCollectionCover = null;
+  const prev = document.getElementById('col-cover-preview');
+  if (prev) {
+    prev.style.backgroundImage = '';
+    prev.innerHTML = selectedCollectionEmoji || '\uD83D\uDCC1';
+  }
+  const clr = document.getElementById('col-cover-clear');
+  if (clr) clr.style.display = 'none';
+  const inp = document.getElementById('col-cover-upload');
+  if (inp) inp.value = '';
 }
 
 function selectCollectionEmoji(el) {
   selectedCollectionEmoji = el.dataset.emoji;
   document.querySelectorAll('#collection-emoji-picker span').forEach(s => s.style.borderColor = 'transparent');
   el.style.borderColor = 'var(--black)';
+  // Update preview only if no photo selected
+  if (!selectedCollectionCover) {
+    const prev = document.getElementById('col-cover-preview');
+    if (prev) prev.innerHTML = selectedCollectionEmoji;
+  }
 }
 
 function saveCollection() {
@@ -3151,9 +3218,9 @@ function saveCollection() {
   if (!name) { showToast('Please enter a collection name'); return; }
   if (editingCollectionId) {
     const b = collections.find(b => b.id === editingCollectionId);
-    if (b) { b.name = name; b.emoji = selectedCollectionEmoji; }
+    if (b) { b.name = name; b.emoji = selectedCollectionEmoji; if (selectedCollectionCover !== null) b.cover = selectedCollectionCover; }
   } else {
-    collections.push({ id: 'b_' + Date.now(), name, emoji: selectedCollectionEmoji });
+    collections.push({ id: 'b_' + Date.now(), name, emoji: selectedCollectionEmoji, cover: selectedCollectionCover || null });
   }
   saveCollections();
   document.getElementById('create-collection-modal').classList.remove('open');
@@ -3948,25 +4015,36 @@ function _renderUserProfileTab(tab, userId) {
   }
 
   if (tab === 'collections') {
-    // Build collections from boards field
+    // Build collection map from boards array on items
     const colMap = {};
     theirItems.forEach(item => {
-      const boards = item.boards || [];
-      boards.forEach(b => { if (!colMap[b]) colMap[b] = []; colMap[b].push(item); });
+      (item.boards || []).forEach(b => {
+        if (!colMap[b]) colMap[b] = { name: b, items: [] };
+        colMap[b].items.push(item);
+      });
     });
-    const cols = Object.entries(colMap);
+    const cols = Object.values(colMap);
     if (cols.length === 0) {
       content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">📦</div><div style="font-size:13px;">No collections yet</div></div>`;
       return;
     }
-    content.innerHTML = `<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:20px;">
-      ${cols.map(([colName, items]) => `
-        <div>
-          <div style="font-size:14px;font-weight:700;color:var(--black);margin-bottom:10px;">${esc(colName)}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            ${items.map(item => _userProfileItemCard(item)).join('')}
+    content.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 16px 0;">
+      ${cols.map(col => {
+        const thumbs = col.items.slice(0,4).map(i =>
+          i.imageData
+            ? `<div style="flex:1;min-width:0;aspect-ratio:1;overflow:hidden;"><img src="${i.imageData}" style="width:100%;height:100%;object-fit:cover;"></div>`
+            : `<div style="flex:1;min-width:0;aspect-ratio:1;overflow:hidden;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px;">${i.emoji||'👗'}</div>`
+        );
+        const empties = [0,1,2,3].slice(thumbs.length).map(() => `<div style="flex:1;min-width:0;aspect-ratio:1;background:var(--gray-100);"></div>`);
+        const allThumbs = [...thumbs, ...empties].slice(0,4);
+        return `<div style="border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--gray-200);box-shadow:0 1px 4px rgba(0,0,0,0.06);" onclick="_expandUserCollection('${userId}','${esc(col.name)}')">
+          <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;">${allThumbs.join('')}</div>
+          <div style="padding:9px 11px;background:var(--card-bg);">
+            <div style="font-size:13px;font-weight:700;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(col.name)}</div>
+            <div style="font-size:11px;color:var(--gray-500);">${col.items.length} item${col.items.length!==1?'s':''}</div>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
     return;
   }
@@ -3984,6 +4062,22 @@ function _renderUserProfileTab(tab, userId) {
     </div>`;
     return;
   }
+}
+
+function _expandUserCollection(userId, colName) {
+  // Show all items in that collection as a full-screen overlay within the profile
+  const content = document.getElementById('user-profile-tab-content');
+  if (!content) return;
+  const theirItems = otherItems.filter(i => i.user_id === userId);
+  const colItems = theirItems.filter(i => (i.boards||[]).includes(colName));
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--gray-100);">
+      <button onclick="_renderUserProfileTab('collections','${userId}')" style="background:none;border:none;cursor:pointer;color:var(--gray-500);font-size:13px;padding:0;">← Collections</button>
+      <span style="font-size:14px;font-weight:700;color:var(--black);">${esc(colName)}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px 0;">
+      ${colItems.map(item => _userProfileItemCard(item)).join('')}
+    </div>`;
 }
 
 function _userProfileItemCard(item) {
@@ -6344,7 +6438,11 @@ async function doGoogleLogin() {
   const { error } = await _supaClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: window.location.origin + window.location.pathname,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',
+      }
     }
   });
   if (error) showAuthError('login', 'Google sign-in failed: ' + error.message);
