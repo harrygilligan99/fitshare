@@ -3341,14 +3341,22 @@ async function toggleLike(id) {
     if (wasLiked) {
       await _supaClient.from('item_likes').delete()
         .eq('user_id', currentSupaUser.id).eq('item_id', id);
+      // Decrement likes count using Postgres RPC to avoid race conditions
+      await _supaClient.rpc('decrement_likes', { item_id: id });
     } else {
       await _supaClient.from('item_likes').upsert(
         { user_id: currentSupaUser.id, item_id: id },
         { onConflict: 'user_id,item_id' }
       );
-      // Also update likes count on items table
-      await _supaClient.from('items').update({ likes: item.likes })
-        .eq('id', id);
+      // Increment likes count using Postgres RPC to avoid race conditions
+      await _supaClient.rpc('increment_likes', { item_id: id });
+    }
+    // Fetch the real count from DB and update locally so it stays accurate
+    const { data: fresh } = await _supaClient.from('items').select('likes').eq('id', id).maybeSingle();
+    if (fresh) {
+      item.likes = fresh.likes || 0;
+      renderFeed(); renderExplore();
+      if (currentScreen === 'item-detail') openItemDetail(id);
     }
   } catch(e) {
     // Rollback optimistic update on error
@@ -5898,8 +5906,8 @@ async function checkHandleAvailability(val) {
     return;
   }
   const handle = '@' + raw;
-  // Don't check if it's same as current handle
-  if (handle === userHandle) {
+  // Don't check if it's same as current handle (case-insensitive)
+  if (handle.toLowerCase() === userHandle.toLowerCase()) {
     status.textContent = '✓ Your current username';
     status.style.color = 'var(--gray-400)';
     _handleAvailable = true;
@@ -5909,7 +5917,8 @@ async function checkHandleAvailability(val) {
   status.style.color = 'var(--gray-400)';
   clearTimeout(_handleCheckTimer);
   _handleCheckTimer = setTimeout(async () => {
-    const { data } = await _supaClient.from('profiles').select('id').ilike('handle', handle).maybeSingle();
+    // handle is already lowercased — stored values are also lowercase
+    const { data } = await _supaClient.from('profiles').select('id').eq('handle', handle).maybeSingle();
     if (data && data.id !== currentSupaUser?.id) {
       status.textContent = '✕ Already taken';
       status.style.color = '#f43f5e';
@@ -5960,7 +5969,7 @@ async function saveProfile() {
   if (newHandle !== userHandle) {
     const statusEl = document.getElementById('handle-status');
     if (statusEl) { statusEl.textContent = 'Checking…'; statusEl.style.color = 'var(--gray-400)'; }
-    const { data: taken } = await _supaClient.from('profiles').select('id').ilike('handle', newHandle).maybeSingle();
+    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', newHandle.toLowerCase()).maybeSingle();
     if (taken && taken.id !== currentSupaUser?.id) {
       showToast('That username is already taken ✕');
       if (statusEl) { statusEl.textContent = '✕ Already taken'; statusEl.style.color = '#f43f5e'; }
@@ -6150,7 +6159,7 @@ async function loadProfile(user) {
   let finalHandle = baseHandle;
   let suffix = 1;
   while (true) {
-    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', finalHandle).maybeSingle();
+    const { data: taken } = await _supaClient.from('profiles').select('id').eq('handle', finalHandle.toLowerCase()).maybeSingle();
     if (!taken) break; // available
     finalHandle = baseHandle + suffix;
     suffix++;
@@ -6168,7 +6177,7 @@ async function loadProfile(user) {
 function applyProfileToUI(profile) {
   if (!profile) return;
   const name = profile.display_name || profile.handle || 'user';
-  const handle = profile.handle || '@user';
+  const handle = (profile.handle || '@user').toLowerCase();
   const initial = name[0]?.toLowerCase() || 'u';
 
   // Update all name/handle/avatar spots
@@ -6626,7 +6635,7 @@ async function doSignup() {
     const { data: existingHandle } = await _supaClient
       .from('profiles')
       .select('id')
-      .ilike('handle', cleanHandle)
+      .eq('handle', cleanHandle.toLowerCase())
       .maybeSingle();
     if (existingHandle) { showAuthError('signup', 'That username is already taken — try another'); btn.textContent = 'Create Account'; btn.style.opacity = '1'; btn.disabled = false; return; }
 
