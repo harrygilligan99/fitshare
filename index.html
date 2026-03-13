@@ -68,7 +68,6 @@
   .topbar-icon:hover { background: var(--gray-100); }
   .topbar-icon svg { width: 24px; height: 24px; color: var(--gray-700); }
   .notif-dot { position: relative; }
-  .notif-dot.has-notif::after { content:''; position:absolute; top:6px; right:6px; width:8px; height:8px; background:var(--red); border-radius:50%; border:2px solid white; }
 
   /* == BOTTOM NAV == */
   .bottom-nav {
@@ -3395,9 +3394,9 @@ function updateNotifBells() {
         el.style.position = 'relative';
         el.appendChild(badge);
       }
-      badge.textContent = count;
-    } else if (badge) {
-      badge.remove();
+      badge.textContent = count > 9 ? '9+' : String(count);
+    } else {
+      if (badge) badge.remove();
     }
   });
 }
@@ -4064,7 +4063,8 @@ async function openUserProfile(userId) {
   const isFollowing = friends.some(f => f.id === userId);
 
   // Render shell immediately
-  profileScreen.innerHTML = _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, 'all');
+  const isFriend = friends.some(f => f.id === userId) || userId === currentSupaUser?.id;
+  profileScreen.innerHTML = _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, 'all', isFriend);
   showScreen('user-profile');
 
   // Fetch real profile from Supabase if not already known
@@ -4074,7 +4074,7 @@ async function openUserProfile(userId) {
       if (prof && _viewingUserId === userId) {
         const n2 = prof.display_name || 'User';
         const h2 = prof.handle || '';
-        profileScreen.innerHTML = _buildUserProfileHTML(userId, n2, h2, prof.avatar_color || color, prof.avatar_url || null, isFollowing, 'all');
+        profileScreen.innerHTML = _buildUserProfileHTML(userId, n2, h2, prof.avatar_color || color, prof.avatar_url || null, isFollowing, 'all', isFriend);
         _renderUserProfileTab('all', userId);
       }
     } catch(e) { console.warn('openUserProfile fetch:', e); }
@@ -4085,7 +4085,7 @@ async function openUserProfile(userId) {
   _loadUserFriendsCount(userId);
 }
 
-function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, activeTab) {
+function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowing, activeTab, isFriend) {
   const avatarContent = avatarUrl
     ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
     : `<span style="font-size:28px;font-weight:800;color:white;">${esc(name[0]?.toUpperCase()||'U')}</span>`;
@@ -4127,6 +4127,10 @@ function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowi
             <div style="font-size:16px;font-weight:800;color:var(--black);">–</div>
             <div style="font-size:11px;color:var(--gray-500);">Friends</div>
           </div>
+          <div style="text-align:center;" id="up-borrowed-count-${userId}">
+            <div style="font-size:16px;font-weight:800;color:var(--black);">–</div>
+            <div style="font-size:11px;color:var(--gray-500);">Borrowed</div>
+          </div>
         </div>
       </div>
       <div>
@@ -4136,8 +4140,15 @@ function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowi
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;border-bottom:1.5px solid var(--gray-200);padding:0 16px;gap:0;">
+    <!-- Tabs or locked state -->
+    ${isFriend ? `<div style="display:flex;border-bottom:1.5px solid var(--gray-200);padding:0 16px;gap:0;">` : `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;text-align:center;border-top:1px solid var(--gray-100);">
+      <div style="font-size:44px;margin-bottom:12px;">🔒</div>
+      <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">This account is private</div>
+      <div style="font-size:13px;color:var(--gray-500);">Add ${esc(name)} as a friend to see their wardrobe</div>
+    </div>
+    <div style="display:none;">` }
+
       <button id="uptab-all" onclick="_renderUserProfileTab('all','${userId}')"
         style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='all'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='all'?700:500};color:${activeTab==='all'?'var(--black)':'var(--gray-500)'};cursor:pointer;transition:all 0.15s;">
         All items
@@ -4152,8 +4163,7 @@ function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowi
         Liked
       </button>
     </div>
-
-    <div id="user-profile-tab-content" style="padding-bottom:24px;"></div>
+    ${isFriend ? `<div id="user-profile-tab-content" style="padding-bottom:24px;"></div>` : ""}
   `;
 }
 
@@ -4243,11 +4253,14 @@ function _renderUserProfileTab(tab, userId) {
 }
 
 async function _loadUserFriendsCount(userId) {
-  const el = document.getElementById('up-friends-count-' + userId);
-  if (!el) return;
-  const { count } = await _supaClient.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
-  const countEl = el.querySelector('div');
-  if (countEl) countEl.textContent = count || 0;
+  const [fr, br] = await Promise.all([
+    _supaClient.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
+    _supaClient.from('borrow_requests').select('*', { count: 'exact', head: true }).eq('requester_id', userId).eq('status', 'approved')
+  ]);
+  const fEl = document.getElementById('up-friends-count-' + userId);
+  if (fEl) { const d = fEl.querySelector('div'); if (d) d.textContent = fr.count || 0; }
+  const bEl = document.getElementById('up-borrowed-count-' + userId);
+  if (bEl) { const d = bEl.querySelector('div'); if (d) d.textContent = br.count || 0; }
 }
 
 function _expandUserCollection(userId, colName) {
