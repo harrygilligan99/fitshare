@@ -82,6 +82,30 @@
     overflow-x: hidden;
     transition: background 0.3s;
   }
+  /* Desktop: show phone frame */
+  @media (min-width: 600px) {
+    html {
+      background: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 0;
+    }
+    body {
+      border-radius: 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08);
+      min-height: 844px;
+      max-height: 844px;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Screens scroll within the phone frame */
+    .screen.active {
+      max-height: 844px;
+      overflow-y: auto;
+    }
+  }
 
   /* == AUTH == */
   .auth-spinner {
