@@ -6214,11 +6214,25 @@ async function saveProfile() {
   
   // Apply avatar image if uploaded
   if (_pendingAvatarImage) {
-    userAvatarImage = _pendingAvatarImage;
+    const localAvatar = _pendingAvatarImage;
     _pendingAvatarImage = null;
+    // Apply locally immediately (base64 or URL)
+    userAvatarImage = localAvatar;
     applyAvatarImageEverywhere(userAvatarImage);
+
+    // Upload to Supabase Storage in background
+    let avatarUrl = localAvatar;
+    if (localAvatar.startsWith('data:')) {
+      const uploaded = await uploadToStorage('avatars', currentSupaUser.id, localAvatar);
+      if (uploaded) {
+        avatarUrl = uploaded;
+        userAvatarImage = uploaded;
+        applyAvatarImageEverywhere(uploaded);
+      }
+    }
+
     const { error: avatarErr } = await _supaClient.from('profiles')
-      .update({ avatar_url: userAvatarImage })
+      .update({ avatar_url: avatarUrl })
       .eq('id', currentSupaUser.id);
     if (avatarErr) {
       console.error('[AVATAR] Save failed:', avatarErr);
@@ -7027,15 +7041,49 @@ async function doLogout() {
 }
 
 // == SAVE ITEM TO SUPABASE ==
+// ── Supabase Storage upload helper ──────────────────────────────
+async function uploadToStorage(bucket, path, dataUrl) {
+  // Convert base64 dataUrl → Blob
+  const [header, b64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(b64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  const blob = new Blob([arr], { type: mime });
+  const ext = mime.split('/')[1] || 'jpg';
+  const filePath = `${path}.${ext}`;
+
+  const { data, error } = await _supaClient.storage
+    .from(bucket)
+    .upload(filePath, blob, { upsert: true, contentType: mime });
+
+  if (error) { console.error('[Storage] upload failed:', error.message); return null; }
+
+  const { data: { publicUrl } } = _supaClient.storage
+    .from(bucket)
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
+
 async function saveItemToSupabase(item) {
   if (!currentSupaUser) return item;
+
+  // Upload image to Supabase Storage if we have base64 data
+  let imageUrl = null;
+  if (item.imageData && item.imageData.startsWith('data:')) {
+    const path = `${currentSupaUser.id}/${Date.now()}`;
+    imageUrl = await uploadToStorage('items', path, item.imageData);
+    if (imageUrl) item.imageData = imageUrl; // swap base64 for URL in memory too
+  }
+
   const row = {
     user_id: currentSupaUser.id,
-    title: item.title.substring(0, 100), // truncate to prevent abuse
+    title: item.title.substring(0, 100),
     category: item.category,
     size: item.size,
     description: item.desc ? item.desc.substring(0, 500) : null,
-    image_url: item.imageData || null,
+    image_url: imageUrl || item.imageData || null,
     emoji: item.emoji || '\uD83D\uDC55',
     visibility: item.visibility || 'friends',
     created_at: new Date().toISOString()
