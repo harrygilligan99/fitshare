@@ -2391,7 +2391,7 @@ let borrowRequests = []; // loaded from Supabase
 // NAVIGATION
 // ==========================================
 // Root-level screens (bottom nav) \u2014 going to these resets the stack
-const ROOT_SCREENS = new Set(['home','explore','wardrobe','settings','groups']);
+const ROOT_SCREENS = new Set(['home','explore','wardrobe','settings']);
 
 // Auth screens that don't need a login
 const AUTH_SCREENS = new Set(['splash','login','signup','tnc']);
@@ -6682,35 +6682,30 @@ function syncAvatarDisplay() {
   const initial = userName ? userName[0].toLowerCase() : '';
   const colour = userAvatarColour || '#2DD4BF';
 
-  // All .avatar-lg elements (wardrobe header, etc)
+  function applyPhoto(el) {
+    // Clear shorthand FIRST — setting background shorthand wipes backgroundImage
+    el.style.background = 'none';
+    el.style.backgroundImage = `url('${photo}')`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+    el.textContent = '';
+  }
+  function applyInitial(el) {
+    el.style.backgroundImage = '';
+    el.style.backgroundSize = '';
+    el.style.backgroundPosition = '';
+    el.style.background = colour;
+    el.textContent = initial;
+  }
+
+  // All .avatar-lg elements
   document.querySelectorAll('.avatar-lg').forEach(el => {
-    if (photo) {
-      el.textContent = '';
-      el.style.backgroundImage = `url('${photo}')`;
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
-      el.style.background = '';
-    } else {
-      el.style.backgroundImage = '';
-      el.style.background = colour;
-      el.textContent = initial;
-    }
+    photo ? applyPhoto(el) : applyInitial(el);
   });
 
-  // Settings avatar specifically
+  // Settings avatar (also .avatar-lg but be explicit)
   const sa = document.getElementById('settings-avatar');
-  if (sa) {
-    if (photo) {
-      sa.textContent = '';
-      sa.style.backgroundImage = `url('${photo}')`;
-      sa.style.backgroundSize = 'cover';
-      sa.style.backgroundPosition = 'center';
-    } else {
-      sa.style.backgroundImage = '';
-      sa.style.background = colour;
-      sa.textContent = initial;
-    }
-  }
+  if (sa) { photo ? applyPhoto(sa) : applyInitial(sa); }
 
   // Bottom nav avatar img
   const navAv = document.getElementById('nav-avatar-img');
@@ -6721,17 +6716,7 @@ function syncAvatarDisplay() {
 
   // QR screen avatar
   const qrAv = document.getElementById('qr-avatar');
-  if (qrAv) {
-    if (photo) {
-      qrAv.textContent = '';
-      qrAv.style.backgroundImage = `url('${photo}')`;
-      qrAv.style.backgroundSize = 'cover';
-      qrAv.style.backgroundPosition = 'center';
-    } else {
-      qrAv.style.backgroundImage = '';
-      qrAv.textContent = initial;
-    }
-  }
+  if (qrAv) { photo ? applyPhoto(qrAv) : applyInitial(qrAv); }
 
   // Re-apply avatar border if saved
   const savedBorder = localStorage.getItem('fs_avatar_border');
