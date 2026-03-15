@@ -2051,32 +2051,28 @@
     <div class="field-label" style="display:flex;align-items:center;gap:6px;">
       Visibility
     </div>
-    <div style="display:flex;gap:8px;" id="visibility-options">
-      <label style="flex:1;border:1.5px solid var(--black);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-friends-lbl" onclick="onVisClick('friends')">
+    <!-- Visibility row: Friends | Private | [groups...] | + -->
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;" id="visibility-options">
+      <!-- Friends -->
+      <label style="flex-shrink:0;min-width:72px;border:1.5px solid var(--black);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-friends-lbl" onclick="onVisClick('friends')">
         <input type="radio" name="item-visibility" value="friends" checked style="display:none;" id="vis-friends">
         <div style="font-size:18px;">👥</div>
         <div style="font-size:11px;font-weight:600;margin-top:2px;">Friends</div>
       </label>
-      <label style="flex:1;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-private-lbl" onclick="onVisClick('private')">
+      <!-- Private -->
+      <label style="flex-shrink:0;min-width:72px;border:1.5px solid var(--gray-200);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-private-lbl" onclick="onVisClick('private')">
         <input type="radio" name="item-visibility" value="private" style="display:none;" id="vis-private">
         <div style="font-size:18px;">🔒</div>
         <div style="font-size:11px;font-weight:600;margin-top:2px;">Private</div>
       </label>
-      <label style="flex:1;border:1.5px dashed var(--gray-300);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:border-color 0.15s;position:relative;" id="vis-group-lbl" onclick="onVisClick('group')">
-        <input type="radio" name="item-visibility" value="group" style="display:none;" id="vis-group">
-        <div style="font-size:18px;position:relative;display:inline-block;">
-          🫂<span style="position:absolute;top:-4px;right:-8px;width:14px;height:14px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:900;line-height:1;">+</span>
-        </div>
-        <div style="font-size:10px;font-weight:600;margin-top:4px;color:var(--gray-500);">Group</div>
-      </label>
+      <!-- Dynamic group chips injected here by renderVisGroupPicker() -->
+      <div id="vis-group-chips" style="display:contents;"></div>
+      <!-- Hidden radio for group selection -->
+      <input type="radio" name="item-visibility" value="group" style="display:none;" id="vis-group">
     </div>
-    <!-- Group picker for Plus members -->
-    <div id="vis-group-picker" style="display:none;margin-top:10px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:12px;color:var(--gray-500);">Visible to which group?</div>
-        <button onclick="openCreateGroupModal()" style="width:28px;height:28px;border-radius:50%;background:var(--black);color:white;border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">＋</button>
-      </div>
-      <div id="vis-group-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+    <!-- Hidden group picker (no longer needed as inline UI) -->
+    <div id="vis-group-picker" style="display:none;">
+      <div id="vis-group-list"></div>
     </div>
 
     <div class="field-label" style="margin-top:16px;">Add to Collection <span style="font-size:11px;font-weight:400;color:var(--gray-400);">optional</span></div>
@@ -2906,6 +2902,8 @@ function openAddModal() {
   });
   updateSizeOptions();
   populateItemCollectionPicker();
+  // Render inline group chips if Pro
+  if (isPro) renderVisGroupPicker();
   document.getElementById('add-modal').classList.add('open');
 }
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
@@ -2966,49 +2964,67 @@ function saveVisGroups() {
 function onVisClick(val) {
   setTimeout(() => {
     document.getElementById('vis-' + val).checked = true;
-    document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
-    document.getElementById('vis-' + val + '-lbl').style.borderColor = 'var(--black)';
-    const picker = document.getElementById('vis-group-picker');
-    if (picker) picker.style.display = val === 'group' ? '' : 'none';
-    if (val === 'group') {
-      if (!isPro) {
-        // Revert to friends, show upsell
-        setTimeout(() => {
-          document.getElementById('vis-friends').checked = true;
-          document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
-          document.getElementById('vis-friends-lbl').style.borderColor = 'var(--black)';
-          picker.style.display = 'none';
-          showToast('Custom groups are a fitshare ✦ Plus feature');
-        }, 50);
-        return;
-      }
-      renderVisGroupPicker();
+    // Update label borders — Friends and Private only
+    document.getElementById('vis-friends-lbl').style.borderColor = val === 'friends' ? 'var(--black)' : 'var(--gray-200)';
+    document.getElementById('vis-private-lbl').style.borderColor = val === 'private' ? 'var(--black)' : 'var(--gray-200)';
+    // Deselect any selected group chip
+    if (val !== 'group') {
+      _selectedVisGroupId = null;
+      visGroups.forEach(g => {
+        const lbl = document.getElementById('vis-glbl-' + g.id);
+        if (lbl) lbl.style.borderColor = 'var(--gray-200)';
+      });
     }
   }, 10);
 }
 
 function renderVisGroupPicker() {
-  const el = document.getElementById('vis-group-list');
-  if (!el) return;
-  if (visGroups.length === 0) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--gray-400);padding:6px 0;">No groups yet — create one below.</div>';
-    return;
-  }
-  el.innerHTML = visGroups.map(g => {
-    const names = g.memberIds.slice(0,3).map(id => {
-      const f = friends.find(f => f.id === id);
-      return f ? (f.display_name || f.handle || '') : '';
-    }).filter(Boolean).join(', ');
+  // Render group chips inline in the visibility row
+  const chipsContainer = document.getElementById('vis-group-chips');
+  if (!chipsContainer) return;
+
+  // Build chips: one per group + a + button at the end
+  let html = '';
+  visGroups.forEach(g => {
     const selected = _selectedVisGroupId === g.id;
-    return `<div onclick="selectVisGroup('${g.id}',this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px solid ${selected?'var(--black)':'var(--gray-200)'};cursor:pointer;transition:border-color 0.15s;">
-      <span style="font-size:20px;">${g.emoji}</span>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;">${esc(g.name)}</div>
-        <div style="font-size:11px;color:var(--gray-500);">${g.memberIds.length} member${g.memberIds.length!==1?'s':''} ${names?'· '+esc(names):''}</div>
-      </div>
-      ${selected ? '<div style="color:var(--teal-dark);font-weight:700;">✓</div>' : ''}
-    </div>`;
-  }).join('');
+    html += `<label style="flex-shrink:0;min-width:72px;border:1.5px solid ${selected?'var(--black)':'var(--gray-200)'};border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;transition:border-color 0.15s;" id="vis-glbl-${g.id}" onclick="selectInlineGroup('${g.id}')">
+      <div style="font-size:18px;">${g.emoji}</div>
+      <div style="font-size:10px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;">${esc(g.name)}</div>
+    </label>`;
+  });
+
+  // + button to create a new group — goes to groups screen
+  html += `<div onclick="openGroupFromAddModal()" style="flex-shrink:0;min-width:52px;border:1.5px dashed var(--gray-300);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+    <div style="width:24px;height:24px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </div>
+    <div style="font-size:9px;font-weight:600;color:var(--gray-400);margin-top:2px;">Group</div>
+  </div>`;
+
+  chipsContainer.innerHTML = html;
+}
+
+function selectInlineGroup(id) {
+  // Select this group as the visibility
+  _selectedVisGroupId = id;
+  document.getElementById('vis-group').checked = true;
+  // Update all label borders
+  document.querySelectorAll('#visibility-options label').forEach(l => l.style.borderColor = 'var(--gray-200)');
+  document.getElementById('vis-friends-lbl').style.borderColor = 'var(--gray-200)';
+  document.getElementById('vis-private-lbl').style.borderColor = 'var(--gray-200)';
+  visGroups.forEach(g => {
+    const lbl = document.getElementById('vis-glbl-' + g.id);
+    if (lbl) lbl.style.borderColor = g.id === id ? 'var(--black)' : 'var(--gray-200)';
+  });
+}
+
+function openGroupFromAddModal() {
+  // If not pro, show upsell
+  if (!isPro) { showToast('✦ Groups are a Plus feature'); showScreen('pro'); return; }
+  // Go to groups screen — when they come back, renderVisGroupPicker will show new group
+  _pendingGroupReturn = true;
+  closeAddModal();
+  openGroupsScreen();
 }
 
 function selectVisGroup(id, el) {
@@ -6793,6 +6809,9 @@ function applyProfileToUI(profile) {
       if (banner) banner.style.display = 'none';
       const proSettingsBtn = document.getElementById('settings-pro-btn');
       if (proSettingsBtn) proSettingsBtn.style.display = 'none';
+      // Show Pro badge in settings header
+      const proBadge = document.getElementById('pro-badge-settings');
+      if (proBadge) proBadge.style.display = 'flex';
     }
   }
 }
