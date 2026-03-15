@@ -72,17 +72,13 @@
     --nav-height: 72px;
   }
 
-  html {
-    height: 100%;
-    overflow: hidden;
-  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
     background: var(--bg, var(--white));
     max-width: 430px;
     margin: 0 auto;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
     position: relative;
     transition: background 0.3s;
   }
@@ -98,7 +94,7 @@
   #screen-login input::placeholder, #screen-signup input::placeholder { color: #6b7280; }
 
   /* == SCREENS == */
-  .screen { display: none; flex-direction: column; height: 100vh; overflow: hidden; padding-bottom: var(--nav-height); }
+  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: var(--nav-height); overflow: hidden; }
   .screen.active { display: flex; }
 
   /* == TOP BAR == */
@@ -143,7 +139,8 @@
   .nav-add svg { width:24px; height:24px; color:white; }
 
   /* == SCROLL CONTENT == */
-  .scroll-content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+  .scroll-content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .scroll-content::-webkit-scrollbar { display:none; }
 
   /* == FEED CARD == */
   .feed-section { padding: 18px 16px 8px; }
@@ -2328,7 +2325,7 @@ function cardHTML(item, isOwn) {
 
   return `
     <div class="feed-card" onclick="openItemDetail('${item.id || item.localId}')">
-      <div class="feed-card-img">${thumbContent}</div>
+      <div class="feed-card-img" onclick="openItemDetail('${item.id || item.localId}')">${thumbContent}</div>
       <div class="feed-card-body">
         <div class="feed-card-user" ${item.user_id && item.user_id !== currentSupaUser?.id ? `onclick="event.stopPropagation();openUserProfile('${item.user_id}')" style="cursor:pointer;"` : ''}>
           ${item.ownerAvatarUrl
@@ -3106,7 +3103,7 @@ function renderWardrobe() {
       const thumbContent = item.imageData ? `<img src="${item.imageData}" alt="${item.title}">` : `<div class="placeholder-icon">${item.emoji||'\uD83D\uDC55'}</div>`;
       return `
         <div class="feed-card" onclick="openItemDetail('${item.localId}')">
-          <div class="feed-card-img">${thumbContent}</div>
+          <div class="feed-card-img" onclick="openItemDetail('${item.localId}')">${thumbContent}</div>
           <div class="feed-card-body">
             <div class="feed-card-title">${item.title}</div>
             <div class="feed-card-size">Size ${item.size} \u00B7 ${item.category}</div>
@@ -3195,7 +3192,7 @@ function openCollection(boardId) {
     ? items.map(item => {
         const thumb = item.imageData ? `<img src="${item.imageData}" alt="${item.title}">` : `<div class="placeholder-icon">${item.emoji||'\uD83D\uDC57'}</div>`;
         return `<div class="feed-card" onclick="openItemDetail('${item.localId}')">
-          <div class="feed-card-img">${thumb}</div>
+          <div class="feed-card-img" onclick="openItemDetail('${item.localId}')">${thumb}</div>
           <div class="feed-card-body">
             <div class="feed-card-title">${item.title}</div>
             <div class="feed-card-size">Size ${item.size}</div>
