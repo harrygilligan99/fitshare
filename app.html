@@ -1169,6 +1169,98 @@
   </div>
 </div>
 
+
+<!-- ========== GROUPS SCREEN ========== -->
+<div class="screen" id="screen-groups">
+  <div class="topbar">
+    <div class="topbar-icon" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </div>
+    <div class="topbar-logo">Groups</div>
+    <div class="topbar-icon" onclick="openCreateGroupScreen()" id="groups-add-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </div>
+  </div>
+  <div class="scroll-content" style="padding:0;">
+
+    <!-- Hero banner -->
+    <div style="margin:16px 16px 0;border-radius:20px;background:linear-gradient(135deg,#111 0%,#2d2d2d 100%);padding:20px;color:white;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(45,212,191,0.15);"></div>
+      <div style="position:absolute;bottom:-30px;right:20px;width:70px;height:70px;border-radius:50%;background:rgba(45,212,191,0.08);"></div>
+      <div style="font-size:28px;margin-bottom:8px;">👥</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Private Groups</div>
+      <div style="font-size:12px;opacity:0.65;line-height:1.5;">Share items with specific friends only — like private stories on Snapchat. Perfect for house mates, best friends, or style squads.</div>
+    </div>
+
+    <!-- Groups list -->
+    <div id="groups-screen-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+      <!-- populated by renderGroupsScreen() -->
+    </div>
+
+    <!-- Create button (bottom) -->
+    <div style="padding:0 16px 24px;">
+      <button onclick="openCreateGroupScreen()" style="width:100%;padding:14px;border-radius:16px;border:1.5px dashed var(--gray-300);background:none;font-size:14px;font-weight:600;color:var(--teal-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Create a new group
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== CREATE/EDIT GROUP SCREEN ========== -->
+<div class="screen" id="screen-create-group">
+  <div class="topbar">
+    <div class="topbar-icon" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </div>
+    <div class="topbar-logo" id="cgs-title">New Group</div>
+    <div style="width:38px;"></div>
+  </div>
+  <div class="scroll-content" style="padding:16px;">
+
+    <!-- Emoji + Name -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;background:var(--gray-50);border-radius:16px;padding:16px;border:1px solid var(--gray-100);">
+      <div id="cgs-emoji-display" onclick="toggleCgsEmojiPicker()" style="width:56px;height:56px;border-radius:14px;background:var(--black);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;flex-shrink:0;">🫂</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Group name</div>
+        <input id="cgs-name" type="text" placeholder="e.g. House girls, Best friends..." maxlength="30"
+          style="width:100%;border:none;background:none;font-size:16px;font-weight:600;color:var(--black);outline:none;font-family:inherit;">
+      </div>
+    </div>
+
+    <!-- Emoji picker (hidden by default) -->
+    <div id="cgs-emoji-picker" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:12px;background:var(--gray-50);border-radius:14px;border:1px solid var(--gray-100);">
+      <span onclick="selectCgsEmoji(this,'🫂')" data-emoji="🫂" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid var(--black);">🫂</span>
+      <span onclick="selectCgsEmoji(this,'👯')" data-emoji="👯" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">👯</span>
+      <span onclick="selectCgsEmoji(this,'🏠')" data-emoji="🏠" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">🏠</span>
+      <span onclick="selectCgsEmoji(this,'✨')" data-emoji="✨" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">✨</span>
+      <span onclick="selectCgsEmoji(this,'👗')" data-emoji="👗" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">👗</span>
+      <span onclick="selectCgsEmoji(this,'🎉')" data-emoji="🎉" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">🎉</span>
+      <span onclick="selectCgsEmoji(this,'💫')" data-emoji="💫" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">💫</span>
+      <span onclick="selectCgsEmoji(this,'🌸')" data-emoji="🌸" style="font-size:26px;cursor:pointer;padding:6px;border-radius:10px;border:2px solid transparent;">🌸</span>
+    </div>
+
+    <!-- Members -->
+    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:10px;">Add members</div>
+    <div id="cgs-members-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;">
+      <!-- populated by renderCgsMembersList() -->
+    </div>
+
+    <!-- Save button -->
+    <button onclick="saveCgsGroup()" style="width:100%;padding:15px;border-radius:16px;border:none;background:var(--black);color:white;font-size:15px;font-weight:700;cursor:pointer;">
+      Save Group
+    </button>
+    <div id="cgs-delete-btn" style="display:none;margin-top:10px;">
+      <button onclick="deleteCgsGroup()" style="width:100%;padding:13px;border-radius:16px;border:1.5px solid #fca5a5;background:none;color:#f87171;font-size:14px;font-weight:600;cursor:pointer;">
+        Delete group
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
 <!-- ========== SETTINGS SCREEN ========== -->
 <div class="screen" id="screen-settings">
   <div class="scroll-content">
@@ -1222,7 +1314,7 @@
       </div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </div>
-    <div class="settings-row" id="settings-groups-row" onclick="openManageGroups()">
+    <div class="settings-row" id="settings-groups-row" onclick="openGroupsScreen()">
       <div class="settings-row-left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
         <span>My Groups <span style="font-size:10px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle;">✦ Plus</span></span>
@@ -2192,7 +2284,7 @@ let borrowRequests = []; // loaded from Supabase
 // NAVIGATION
 // ==========================================
 // Root-level screens (bottom nav) \u2014 going to these resets the stack
-const ROOT_SCREENS = new Set(['home','explore','wardrobe','settings']);
+const ROOT_SCREENS = new Set(['home','explore','wardrobe','settings','groups']);
 
 // Auth screens that don't need a login
 const AUTH_SCREENS = new Set(['splash','login','signup','tnc']);
@@ -2245,6 +2337,7 @@ function showScreen(name) {
   if (name === 'calendar')    renderCalendar();
   if (name === 'messages')    renderInbox();
   if (name === 'settings')    renderThemeGrid();
+  if (name === 'groups')      renderGroupsScreen();
   if (name === 'editprofile') {
     const editName = document.getElementById('edit-name');
     const editHandle = document.getElementById('edit-handle');
@@ -2881,6 +2974,178 @@ function renderVisGroupPicker() {
 function selectVisGroup(id, el) {
   _selectedVisGroupId = id;
   renderVisGroupPicker();
+}
+
+
+// ── GROUPS SCREEN ────────────────────────────────────────────────
+let _cgsEditingId = null;
+let _cgsEmoji = '🫂';
+
+function openGroupsScreen() {
+  if (!isPro) {
+    showScreen('pro');
+    showToast('✦ Groups are a fitshare Plus feature');
+    return;
+  }
+  renderGroupsScreen();
+  showScreen('groups');
+}
+
+function renderGroupsScreen() {
+  const el = document.getElementById('groups-screen-list');
+  if (!el) return;
+  if (visGroups.length === 0) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:32px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">👥</div>
+        <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:6px;">No groups yet</div>
+        <div style="font-size:13px;color:var(--gray-500);">Create a group to share items with specific friends only.</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = visGroups.map(g => {
+    const members = g.memberIds.map(id => friends.find(f => f.id === id)).filter(Boolean);
+    const avatarRow = members.slice(0,5).map(m => {
+      const bg = m.color || '#2DD4BF';
+      const letter = (m.name||'?')[0].toLowerCase();
+      const img = m.avatarUrl ? `<img src="${m.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `<span style="font-size:11px;font-weight:700;color:white;">${esc(letter)}</span>`;
+      return `<div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;border:2px solid white;margin-left:-6px;flex-shrink:0;overflow:hidden;">${img}</div>`;
+    }).join('');
+    return `
+      <div onclick="openEditGroupScreen('${g.id}')" style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:var(--gray-50);border:1px solid var(--gray-100);cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='var(--gray-100)'" onmouseleave="this.style.background='var(--gray-50)'">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--black);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${g.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--black);margin-bottom:4px;">${esc(g.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="display:flex;margin-left:6px;">${avatarRow || '<span style="font-size:12px;color:var(--gray-400);">No members yet</span>'}</div>
+            ${members.length > 0 ? `<span style="font-size:12px;color:var(--gray-500);margin-left:4px;">${members.length} member${members.length!==1?'s':''}</span>` : ''}
+          </div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--gray-400);flex-shrink:0;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>`;
+  }).join('');
+}
+
+function openCreateGroupScreen() {
+  _cgsEditingId = null;
+  _cgsEmoji = '🫂';
+  document.getElementById('cgs-title').textContent = 'New Group';
+  document.getElementById('cgs-name').value = '';
+  document.getElementById('cgs-emoji-display').textContent = '🫂';
+  document.getElementById('cgs-emoji-picker').style.display = 'none';
+  document.getElementById('cgs-delete-btn').style.display = 'none';
+  // Reset emoji picker selection
+  document.querySelectorAll('#cgs-emoji-picker span').forEach(s => {
+    s.style.borderColor = s.dataset.emoji === '🫂' ? 'var(--black)' : 'transparent';
+  });
+  renderCgsMembersList([]);
+  showScreen('create-group');
+}
+
+function openEditGroupScreen(id) {
+  const g = visGroups.find(x => x.id === id);
+  if (!g) return;
+  _cgsEditingId = id;
+  _cgsEmoji = g.emoji;
+  document.getElementById('cgs-title').textContent = 'Edit Group';
+  document.getElementById('cgs-name').value = g.name;
+  document.getElementById('cgs-emoji-display').textContent = g.emoji;
+  document.getElementById('cgs-emoji-picker').style.display = 'none';
+  document.getElementById('cgs-delete-btn').style.display = 'block';
+  document.querySelectorAll('#cgs-emoji-picker span').forEach(s => {
+    s.style.borderColor = s.dataset.emoji === g.emoji ? 'var(--black)' : 'transparent';
+  });
+  renderCgsMembersList(g.memberIds);
+  showScreen('create-group');
+}
+
+function toggleCgsEmojiPicker() {
+  const p = document.getElementById('cgs-emoji-picker');
+  p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+}
+
+function selectCgsEmoji(el, emoji) {
+  _cgsEmoji = emoji;
+  document.getElementById('cgs-emoji-display').textContent = emoji;
+  document.querySelectorAll('#cgs-emoji-picker span').forEach(s => {
+    s.style.borderColor = s.dataset.emoji === emoji ? 'var(--black)' : 'transparent';
+  });
+  document.getElementById('cgs-emoji-picker').style.display = 'none';
+}
+
+function renderCgsMembersList(selectedIds) {
+  const el = document.getElementById('cgs-members-list');
+  if (!el) return;
+  if (friends.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:16px;">Add some friends first to create groups!</div>';
+    return;
+  }
+  el.innerHTML = friends.map(f => {
+    const checked = selectedIds.includes(f.id);
+    const bg = f.color || '#2DD4BF';
+    const letter = (f.name||'?')[0].toLowerCase();
+    const avatarHtml = f.avatarUrl
+      ? `<img src="${f.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : `<span style="font-size:14px;font-weight:700;color:white;">${esc(letter)}</span>`;
+    return `
+      <label style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;border:1.5px solid ${checked ? 'var(--black)' : 'var(--gray-200)'};background:${checked ? 'var(--gray-50)' : 'white'};cursor:pointer;transition:all 0.15s;" id="cgs-member-row-${f.id}">
+        <input type="checkbox" name="cgs-member" value="${f.id}" ${checked ? 'checked' : ''} style="display:none;" onchange="updateCgsMemberRow('${f.id}',this.checked)">
+        <div style="width:40px;height:40px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">${avatarHtml}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--black);">${esc(f.name)}</div>
+          <div style="font-size:12px;color:var(--gray-500);">${esc(f.handle||'')}</div>
+        </div>
+        <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${checked ? 'var(--black)' : 'var(--gray-300)'};background:${checked ? 'var(--black)' : 'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;" id="cgs-check-${f.id}">
+          ${checked ? '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+        </div>
+      </label>`;
+  }).join('');
+}
+
+function updateCgsMemberRow(id, checked) {
+  const row = document.getElementById('cgs-member-row-' + id);
+  const check = document.getElementById('cgs-check-' + id);
+  if (row) {
+    row.style.borderColor = checked ? 'var(--black)' : 'var(--gray-200)';
+    row.style.background = checked ? 'var(--gray-50)' : 'white';
+  }
+  if (check) {
+    check.style.borderColor = checked ? 'var(--black)' : 'var(--gray-300)';
+    check.style.background = checked ? 'var(--black)' : 'white';
+    check.innerHTML = checked ? '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '';
+  }
+}
+
+function saveCgsGroup() {
+  const name = document.getElementById('cgs-name').value.trim();
+  if (!name) { showToast('Give your group a name!'); return; }
+  const memberIds = [...document.querySelectorAll('input[name="cgs-member"]:checked')].map(c => c.value);
+  if (_cgsEditingId) {
+    const g = visGroups.find(x => x.id === _cgsEditingId);
+    if (g) { g.name = name; g.emoji = _cgsEmoji; g.memberIds = memberIds; }
+    showToast('Group updated!');
+  } else {
+    visGroups.push({ id: 'vg_' + Date.now(), name, emoji: _cgsEmoji, memberIds });
+    showToast('Group created! 🎉');
+  }
+  saveVisGroups();
+  _cgsEditingId = null;
+  renderGroupsScreen();
+  renderVisGroupPicker();
+  goBack();
+}
+
+function deleteCgsGroup() {
+  if (!_cgsEditingId) return;
+  if (!confirm('Delete this group? Items shared with it will become private.')) return;
+  visGroups = visGroups.filter(g => g.id !== _cgsEditingId);
+  saveVisGroups();
+  showToast('Group deleted');
+  _cgsEditingId = null;
+  renderGroupsScreen();
+  renderVisGroupPicker();
+  // Go back twice (edit → groups)
+  goBack(); goBack();
 }
 
 function openManageGroups() {
