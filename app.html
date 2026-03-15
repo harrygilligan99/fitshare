@@ -899,17 +899,46 @@
     <div class="filter-row" id="cat-filters" style="padding-top:10px;">
       <div class="filter-chip active" onclick="setCatFilter(&#39;All&#39;,this)">All</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Top&#39;,this)">👕 Tops</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;T-Shirt&#39;,this)">👕 T-Shirts</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Shirt&#39;,this)">👔 Shirts</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Blouse&#39;,this)">👚 Blouses</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Hoodie&#39;,this)">🧥 Hoodies</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Sweatshirt&#39;,this)">👕 Sweatshirts</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Knitwear&#39;,this)">🧶 Knitwear</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Bottom&#39;,this)">👖 Bottoms</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Jeans&#39;,this)">👖 Jeans</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Trousers&#39;,this)">👔 Trousers</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Leggings&#39;,this)">🩱 Leggings</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Shorts&#39;,this)">🩲 Shorts</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Skirt&#39;,this)">👗 Skirts</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Dress&#39;,this)">👗 Dresses</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Outerwear&#39;,this)">🧥 Outerwear</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Jumpsuit&#39;,this)">🩱 Jumpsuits</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Co-ord&#39;,this)">👗 Co-ords</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Outerwear&#39;,this)">🧥 Coats & Jackets</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Blazer&#39;,this)">🧥 Blazers</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Suit&#39;,this)">👔 Suits</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Activewear&#39;,this)">🏃 Activewear</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Swimwear&#39;,this)">👙 Swimwear</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Lingerie&#39;,this)">🩱 Lingerie</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Shoes&#39;,this)">👟 Shoes</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Accessory&#39;,this)">👜 Accessories</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Hat&#39;,this)">🧢 Hats</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Trainers&#39;,this)">👟 Trainers</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Boots&#39;,this)">👢 Boots</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Heels&#39;,this)">👠 Heels</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Sandals&#39;,this)">🩴 Sandals</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Bag&#39;,this)">👜 Bags</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Handbag&#39;,this)">👛 Handbags</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Backpack&#39;,this)">🎒 Backpacks</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Hat&#39;,this)">🧢 Hats & Caps</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Scarf&#39;,this)">🧣 Scarves</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Bag&#39;,this)">👛 Bags</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Belt&#39;,this)">👔 Belts</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Jewellery&#39;,this)">💍 Jewellery</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Sunglasses&#39;,this)">🕶️ Sunglasses</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Accessory&#39;,this)">✨ Accessories</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Prom&#39;,this)">👑 Prom</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Bridesmaid&#39;,this)">💐 Bridesmaid</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Occasion&#39;,this)">🎉 Occasion</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Costume&#39;,this)">🎭 Costume</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Vintage&#39;,this)">🕰️ Vintage</div>
     </div>
 
     <!-- Sort + result count row -->
@@ -962,13 +991,7 @@
       <div class="size-chip" onclick="setSizeFilter('10',this)">10</div>
       <div class="size-chip" onclick="setSizeFilter('12',this)">12</div>
     </div>
-    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Condition</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="filter-conditions">
-      <div class="filter-chip active" onclick="setCondFilter('All',this)">All</div>
-      <div class="filter-chip" onclick="setCondFilter('New with tags',this)">New with tags</div>
-      <div class="filter-chip" onclick="setCondFilter('Excellent',this)">Excellent</div>
-      <div class="filter-chip" onclick="setCondFilter('Good',this)">Good</div>
-    </div>
+
     <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Friends only</div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-100);">
       <span style="font-size:13px;color:var(--gray-700);">Only show items from friends</span>
@@ -2009,19 +2032,46 @@
         <div class="field-label" style="margin-top:0">Category</div>
         <select class="field-select" id="item-category" onchange="updateSizeOptions()">
           <option>Top</option>
+          <option>T-Shirt</option>
+          <option>Shirt</option>
+          <option>Blouse</option>
+          <option>Hoodie</option>
+          <option>Sweatshirt</option>
+          <option>Knitwear</option>
           <option>Bottom</option>
           <option>Jeans</option>
-          <option>Dress</option>
+          <option>Trousers</option>
+          <option>Leggings</option>
+          <option>Shorts</option>
           <option>Skirt</option>
+          <option>Dress</option>
+          <option>Jumpsuit</option>
+          <option>Co-ord</option>
           <option>Outerwear</option>
+          <option>Blazer</option>
+          <option>Suit</option>
+          <option>Activewear</option>
+          <option>Swimwear</option>
+          <option>Lingerie</option>
           <option>Shoes</option>
           <option>Trainers</option>
           <option>Boots</option>
-          <option>Accessory</option>
+          <option>Heels</option>
+          <option>Sandals</option>
           <option>Bag</option>
-          <option>Swimwear</option>
-          <option>Sportswear</option>
-          <option>Suit</option>
+          <option>Handbag</option>
+          <option>Backpack</option>
+          <option>Hat</option>
+          <option>Scarf</option>
+          <option>Belt</option>
+          <option>Jewellery</option>
+          <option>Sunglasses</option>
+          <option>Accessory</option>
+          <option>Prom</option>
+          <option>Bridesmaid</option>
+          <option>Occasion</option>
+          <option>Costume</option>
+          <option>Vintage</option>
           <option>Other</option>
         </select>
       </div>
@@ -2583,17 +2633,13 @@ function resetFilters() {
   currentCondFilter = 'All';
   document.getElementById('friends-only-toggle').classList.remove('on');
   document.querySelectorAll('#filter-sizes .size-chip').forEach((c,i) => c.classList.toggle('active', i===0));
-  document.querySelectorAll('#filter-conditions .filter-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+
   renderExplore();
   updateFilterBtn();
 }
-function setCondFilter(cond, el) {
-  currentCondFilter = cond;
-  document.querySelectorAll('#filter-conditions .filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-}
+
 function updateFilterBtn() {
-  const active = currentSizeFilter !== 'All' || currentCondFilter !== 'All' ||
+  const active = currentSizeFilter !== 'All' || currentOccFilter !== 'All' ||
     document.getElementById('friends-only-toggle')?.classList.contains('on');
   const btn = document.getElementById('filter-btn');
   if (btn) {
@@ -2690,10 +2736,9 @@ function renderExplore() {
   let filtered = allItems.filter(item => {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
-    const condOk = currentCondFilter === 'All' || (item.condition || '') === currentCondFilter;
     const occOk = currentOccFilter === 'All' || (item.occasion || item.category || '') === currentOccFilter;
     const friendsOk = !friendsOnly || friendIds.has(item.user_id) || item.user_id === currentSupaUser?.id;
-    if (!catOk || !sizeOk || !condOk || !occOk || !friendsOk) return false;
+    if (!catOk || !sizeOk || !occOk || !friendsOk) return false;
     if (!words.length) return true;
     // All words must appear somewhere across all fields
     const haystack = [item.title, item.category, item.size, item.desc||'', item.owner||'', item.handle||''].join(' ').toLowerCase();
@@ -2913,19 +2958,46 @@ function closeAddModal() { document.getElementById('add-modal').classList.remove
 // ==========================================
 const CATEGORY_SIZES = {
   'Top':        ['XS','S','M','L','XL','XXL'],
+  'T-Shirt':    ['XS','S','M','L','XL','XXL'],
+  'Shirt':      ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Blouse':     ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Hoodie':     ['XS','S','M','L','XL','XXL'],
+  'Sweatshirt': ['XS','S','M','L','XL','XXL'],
+  'Knitwear':   ['XS','S','M','L','XL','XXL'],
   'Bottom':     ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
   'Jeans':      ['W24','W25','W26','W27','W28','W29','W30','W31','W32','W33','W34','W36','W38'],
+  'Trousers':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Leggings':   ['XS','S','M','L','XL','XXL'],
+  'Shorts':     ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
   'Dress':      ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
   'Skirt':      ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Jumpsuit':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Co-ord':     ['XS','S','M','L','XL','XXL'],
   'Outerwear':  ['XS','S','M','L','XL','XXL'],
+  'Blazer':     ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Suit':       ['XS','S','M','L','XL','XXL','36','38','40','42','44'],
+  'Activewear': ['XS','S','M','L','XL','XXL'],
+  'Swimwear':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Lingerie':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
   'Shoes':      ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11','UK12'],
   'Trainers':   ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11','UK12'],
   'Boots':      ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10','UK11'],
-  'Accessory':  ['One size','S','M','L'],
+  'Heels':      ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10'],
+  'Sandals':    ['UK3','UK4','UK5','UK6','UK7','UK8','UK9','UK10'],
   'Bag':        ['One size'],
-  'Swimwear':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
-  'Sportswear': ['XS','S','M','L','XL','XXL'],
-  'Suit':       ['XS','S','M','L','XL','XXL','36','38','40','42','44'],
+  'Handbag':    ['One size'],
+  'Backpack':   ['One size'],
+  'Hat':        ['One size','S','M','L'],
+  'Scarf':      ['One size'],
+  'Belt':       ['XS','S','M','L','XL','XXL'],
+  'Jewellery':  ['One size'],
+  'Sunglasses': ['One size'],
+  'Accessory':  ['One size','S','M','L'],
+  'Prom':       ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Bridesmaid': ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Occasion':   ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
+  'Costume':    ['XS','S','M','L','XL','XXL','One size'],
+  'Vintage':    ['XS','S','M','L','XL','XXL','6','8','10','12','14','16'],
   'Other':      ['XS','S','M','L','XL','XXL','One size'],
 };
 const DEFAULT_SIZE = {
@@ -4582,16 +4654,29 @@ function _renderUserProfileTab(tab, userId) {
   if (tab === 'collections') {
     // Build collection map from boards array on items
     const colMap = {};
-    // Build a lookup of board id -> name from the owner's saved collections
+    // Build a lookup of board id -> metadata from the owner's profile collections
+    // ownerCollections can live on any of their items — grab from the first one that has it
     const ownerColMeta = {};
-    theirItems.forEach(i => (i.ownerCollections||[]).forEach(col => { ownerColMeta[col.id] = col; }));
+    theirItems.forEach(i => {
+      (i.ownerCollections||[]).forEach(col => {
+        if (col && col.id) ownerColMeta[col.id] = col;
+      });
+    });
     theirItems.forEach(item => {
       (item.boards || []).forEach(b => {
-        if (!colMap[b]) colMap[b] = { id: b, name: ownerColMeta[b]?.name || b, emoji: ownerColMeta[b]?.emoji || '📁', items: [] };
+        const meta = ownerColMeta[b];
+        // Only show collections where we have a real name (not raw IDs)
+        const name = meta?.name || null;
+        const emoji = meta?.emoji || '📁';
+        if (!colMap[b]) colMap[b] = { id: b, name, emoji, items: [] };
         colMap[b].items.push(item);
       });
     });
-    const cols = Object.values(colMap);
+    // Filter to only show collections we have metadata for (skip raw-ID ones)
+    const knownCols = Object.values(colMap).filter(col => col.name);
+    // If no named collections found, show all (graceful fallback)
+    const allCols = Object.values(colMap);
+    const cols = knownCols.length > 0 ? knownCols : allCols;
     if (cols.length === 0) {
       content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">📦</div><div style="font-size:13px;">No collections yet</div></div>`;
       return;
@@ -6236,13 +6321,17 @@ function selectColour(el, colour) {
 }
 
 function applyNameColour(colour) {
-  // Apply the user's name colour everywhere their name appears in the app
-  const els = [
+  // Apply ONLY to the user's display name elements — never to topbar-logo
+  const targets = [
     document.getElementById('settings-name'),
     document.querySelector('#screen-wardrobe .profile-info h3'),
     document.getElementById('qr-name'),
   ];
-  els.forEach(el => { if (el) el.style.color = colour || ''; });
+  targets.forEach(el => { if (el) el.style.color = colour || ''; });
+  // Explicitly ensure all topbar-logos stay black (inherit theme)
+  document.querySelectorAll('.topbar-logo').forEach(el => {
+    el.style.color = '';  // remove any inline colour override
+  });
 }
 
 function previewName() {
