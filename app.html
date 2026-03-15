@@ -94,7 +94,7 @@
   #screen-login input::placeholder, #screen-signup input::placeholder { color: #6b7280; }
 
   /* == SCREENS == */
-  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: var(--nav-height); overflow: hidden; }
+  .screen { display: none; flex-direction: column; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; height: 100%; padding-bottom: var(--nav-height); overflow: hidden; z-index: 1; }
   .screen.active { display: flex; }
 
   /* == TOP BAR == */
@@ -121,7 +121,7 @@
     border-top: 1px solid var(--gray-200);
     display: flex; align-items: center; justify-content: space-around;
     padding: 0 10px;
-    z-index: 100;
+    z-index: 200;
   }
   .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:6px 14px; border-radius:12px; transition:background 0.15s; }
   .nav-item:hover { background: var(--gray-50); }
@@ -159,7 +159,8 @@
     z-index: 1;
   }
   .feed-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.1); }
-  .feed-card-img { width:100%; aspect-ratio:3/4; object-fit:cover; background: var(--gray-200); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .feed-card-img { width:100%; aspect-ratio:3/4; object-fit:cover; background: var(--gray-200); display:flex; align-items:center; justify-content:center; overflow:hidden;  cursor:pointer; pointer-events:auto;
+  }
   .feed-card-img img { width:100%; height:100%; object-fit:cover; }
   .feed-card-img .placeholder-icon { font-size:40px; }
   .feed-card-body { padding:10px 10px 8px; }
@@ -292,7 +293,7 @@
   /* == ADD MODAL == */
   .modal-overlay {
     display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
-    z-index:200; align-items:flex-end; justify-content:center;
+    z-index:300; align-items:flex-end; justify-content:center;
   }
   .modal-overlay.open { display:flex; }
   .modal {
@@ -4097,7 +4098,7 @@ async function openUserProfile(userId) {
     const div = document.createElement('div');
     div.className = 'screen';
     div.id = 'screen-user-profile';
-    div.style.cssText = 'padding:0;overflow-y:auto;';
+    div.style.cssText = 'padding:0;';
     document.body.appendChild(div);
     profileScreen = div;
   }
