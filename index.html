@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <script>
-    // If opened as installed PWA or on mobile, go straight to the app
+    // If opened as installed PWA, go straight to the app
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
                       || window.navigator.standalone;
-    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
-    if (isStandalone || isMobile) {
+    if (isStandalone) {
       window.location.replace('/app');
     }
   </script>
