@@ -904,6 +904,12 @@
       <div class="filter-chip" onclick="setCatFilter(&#39;Outerwear&#39;,this)">🧥 Outerwear</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Shoes&#39;,this)">👟 Shoes</div>
       <div class="filter-chip" onclick="setCatFilter(&#39;Accessory&#39;,this)">👜 Accessories</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Hat&#39;,this)">🧢 Hats</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Scarf&#39;,this)">🧣 Scarves</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Bag&#39;,this)">👛 Bags</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Prom&#39;,this)">👑 Prom</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Bridesmaid&#39;,this)">💐 Bridesmaid</div>
+      <div class="filter-chip" onclick="setCatFilter(&#39;Occasion&#39;,this)">🎉 Occasion</div>
     </div>
 
     <!-- Sort + result count row -->
@@ -971,6 +977,20 @@
     <div style="display:flex;gap:10px;margin-top:20px;">
       <button onclick="resetFilters()" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid var(--gray-200);background:white;font-size:14px;font-weight:600;cursor:pointer;">Reset</button>
       <button onclick="applyFilters()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--black);color:white;font-size:14px;font-weight:600;cursor:pointer;">Apply</button>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Occasion</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="occasion-filter-chips">
+        <div class="size-chip active" onclick="setOccFilter('All',this)">All</div>
+        <div class="size-chip" onclick="setOccFilter('Casual',this)">Casual</div>
+        <div class="size-chip" onclick="setOccFilter('Going out',this)">Going out</div>
+        <div class="size-chip" onclick="setOccFilter('Formal',this)">Formal</div>
+        <div class="size-chip" onclick="setOccFilter('Prom',this)">👑 Prom</div>
+        <div class="size-chip" onclick="setOccFilter('Bridesmaid',this)">💐 Bridesmaid</div>
+        <div class="size-chip" onclick="setOccFilter('Festival',this)">Festival</div>
+        <div class="size-chip" onclick="setOccFilter('Holiday',this)">Holiday</div>
+        <div class="size-chip" onclick="setOccFilter('Work',this)">Work</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2013,7 +2033,19 @@
         </select>
       </div>
     </div>
-    <div class="field-label">Description</div>
+    <div class="field-label">Occasion <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(optional)</span></div>
+    <select class="field-input" id="item-occasion" style="padding:10px 12px;">
+      <option value="">Any occasion</option>
+      <option value="Casual">Casual</option>
+      <option value="Going out">Going out</option>
+      <option value="Formal">Formal</option>
+      <option value="Prom">👑 Prom</option>
+      <option value="Bridesmaid">💐 Bridesmaid</option>
+      <option value="Festival">Festival</option>
+      <option value="Holiday">Holiday</option>
+      <option value="Work">Work</option>
+    </select>
+        <div class="field-label">Description</div>
     <textarea class="field-input field-textarea" placeholder="Tell us about the fit, condition, etc." id="item-desc"></textarea>
 
     <div class="field-label" style="display:flex;align-items:center;gap:6px;">
@@ -2266,6 +2298,7 @@ let currentItem = null;
 let uploadedPhotoData = null;
 let currentCatFilter = 'All';
 let currentSizeFilter = 'All';
+let currentOccFilter = 'All';
 
 // Real data only — no fake users
 let friends = [];
@@ -2662,8 +2695,9 @@ function renderExplore() {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
     const condOk = currentCondFilter === 'All' || (item.condition || '') === currentCondFilter;
+    const occOk = currentOccFilter === 'All' || (item.occasion || item.category || '') === currentOccFilter;
     const friendsOk = !friendsOnly || friendIds.has(item.user_id) || item.user_id === currentSupaUser?.id;
-    if (!catOk || !sizeOk || !condOk || !friendsOk) return false;
+    if (!catOk || !sizeOk || !condOk || !occOk || !friendsOk) return false;
     if (!words.length) return true;
     // All words must appear somewhere across all fields
     const haystack = [item.title, item.category, item.size, item.desc||'', item.owner||'', item.handle||''].join(' ').toLowerCase();
@@ -2695,6 +2729,12 @@ function renderExplore() {
   document.getElementById('explore-grid').innerHTML = filtered.length
     ? filtered.map(item => cardHTML(item, item.user_id === currentSupaUser?.id || (!item.isOther && myItems.some(i => i.id === item.id)))).join('')
     : `<div class="empty-state" style="grid-column:1/-1"><p>${emptyMsg}</p></div>`;
+}
+
+function setOccFilter(occ, btn) {
+  currentOccFilter = occ;
+  document.querySelectorAll('#occasion-filter-chips .size-chip').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
 }
 
 function setCatFilter(cat, el) {
@@ -3326,6 +3366,7 @@ async function addItem() {
     category: document.getElementById('item-category').value,
     size: document.getElementById('item-size').value,
     desc: document.getElementById('item-desc').value,
+    occasion: document.getElementById('item-occasion')?.value || '',
     imageData: uploadedPhotoData,
     emoji: '\uD83D\uDC55',
     visibility,
@@ -6741,6 +6782,19 @@ function applyProfileToUI(profile) {
   }
   // Always sync the edit screen preview
   refreshEditAvatarPreview();
+
+  // ── Pro status from DB ──
+  if (profile.is_pro || profile.pro_expires_at) {
+    const expiry = profile.pro_expires_at ? new Date(profile.pro_expires_at) : null;
+    const isActive = !expiry || expiry > new Date();
+    if (isActive) {
+      isPro = true;
+      const banner = document.getElementById('pro-banner');
+      if (banner) banner.style.display = 'none';
+      const proSettingsBtn = document.getElementById('settings-pro-btn');
+      if (proSettingsBtn) proSettingsBtn.style.display = 'none';
+    }
+  }
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
@@ -6763,6 +6817,7 @@ async function loadMyItems() {
       desc: row.description || '',
       imageData: row.image_url || null,
       emoji: row.emoji || '\uD83D\uDC55',
+      occasion: row.occasion || '',
       boards: row.boards || [],
       // Owner fields — populated from current user profile
       owner: userName || '',
@@ -7327,6 +7382,7 @@ async function saveItemToSupabase(item) {
     image_url: item.imageData || null,
     emoji: item.emoji || '\uD83D\uDC55',
     visibility: item.visibility || 'friends',
+    occasion: item.occasion || null,
     created_at: new Date().toISOString()
   };
   const { data, error } = await _supaClient.from('items').insert(row).select().single();
