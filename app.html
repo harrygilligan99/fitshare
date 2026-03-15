@@ -77,29 +77,12 @@
     background: var(--bg, var(--white));
     max-width: 430px;
     margin: 0 auto;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     position: relative;
-    overflow-x: hidden;
     transition: background 0.3s;
   }
-  /* Desktop: phone frame — only on genuinely wide screens */
-  @media (min-width: 700px) {
-    html {
-      background: #f0f0f0;
-      min-height: 100vh;
-    }
-    body {
-      margin-top: 24px;
-      margin-bottom: 24px;
-      border-radius: 40px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08);
-      overflow: hidden;
-    }
-    .screen.active {
-      overflow-y: auto;
-      height: calc(100vh - 48px);
-    }
-  }
+  /* Desktop view: body overflow:hidden handles containment */
 
   /* == AUTH == */
   .auth-spinner {
@@ -111,7 +94,7 @@
   #screen-login input::placeholder, #screen-signup input::placeholder { color: #6b7280; }
 
   /* == SCREENS == */
-  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: var(--nav-height); }
+  .screen { display: none; flex-direction: column; height: 100vh; overflow: hidden; padding-bottom: var(--nav-height); }
   .screen.active { display: flex; }
 
   /* == TOP BAR == */
@@ -156,7 +139,7 @@
   .nav-add svg { width:24px; height:24px; color:white; }
 
   /* == SCROLL CONTENT == */
-  .scroll-content { flex:1; overflow-y:auto; }
+  .scroll-content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
   /* == FEED CARD == */
   .feed-section { padding: 18px 16px 8px; }
@@ -2632,7 +2615,10 @@ function setSizeFilter(size, el) {
 // ITEM DETAIL
 // ==========================================
 function getItemById(id) {
-  return sampleItems.find(i => i.id === id) || myItems.find(i => i.localId === id) || otherItems.find(i => i.id === id);
+  // Search live data first — sampleItems is always empty
+  return myItems.find(i => i.localId === id || i.id === id)
+      || otherItems.find(i => i.id === id || i.localId === id)
+      || sampleItems.find(i => i.id === id);
 }
 
 function openItemDetail(id) {

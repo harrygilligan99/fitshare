@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // If opened as installed PWA or on mobile, go straight to the app
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                      || window.navigator.standalone;
+    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+    if (isStandalone || isMobile) {
+      window.location.replace('/app');
+    }
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>fitshare — share your wardrobe</title>
@@ -449,6 +458,6 @@
     </a>
     <nav>
       <a href="/privacy">Privacy Policy</a>
-      <a href="mailto:info@fitshare.co.uk">Contact</a>
+      <a href="/cdn-cgi/l/email-protection#553c3b333a15333c21263d3427307b363a7b203e">Contact</a>
     </nav>
-    <p class="copyright">&copy; 2026 fitshare. All rights 
+    <p class="co
