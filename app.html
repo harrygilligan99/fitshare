@@ -1056,7 +1056,7 @@
   </div>
   <div class="scroll-content">
     <div class="profile-header">
-      <div class="avatar-lg">h</div>
+      <div class="avatar-lg"></div>
       <div class="profile-info">
         <h3>harry</h3>
         <div class="handle">@54024831</div>
@@ -1337,7 +1337,7 @@
   <div class="scroll-content">
     <div class="settings-header"><h2>Settings</h2></div>
     <div class="settings-user">
-      <div class="avatar-lg" id="settings-avatar" style="width:48px;height:48px;font-size:18px;">h</div>
+      <div class="avatar-lg" id="settings-avatar" style="width:48px;height:48px;font-size:18px;"></div>
       <div>
         <div class="name" id="settings-name">harry</div>
         <div class="email"><a href="mailto:info@fitshare.co.uk" style="color:#2DD4BF;">info@fitshare.co.uk</a></div>
@@ -6673,34 +6673,77 @@ function _setAvatarEl(el, dataUrl) {
   }
 }
 
-function applyAvatarImageEverywhere(dataUrl) {
-  if (!dataUrl) return;
-  // Update ownerAvatarUrl on all myItems so item detail reflects latest avatar
-  myItems.forEach(i => { i.ownerAvatarUrl = dataUrl; });
-  // Update bottom nav profile icon to user's own photo
-  const _navAv = document.getElementById('nav-avatar-img');
-  if (_navAv) { _navAv.src = dataUrl; _navAv.style.borderRadius = '50%'; _navAv.style.outline = 'none'; }
-  // All .avatar-lg elements — clear text initial, set photo
-  document.querySelectorAll('.avatar-lg').forEach(a => {
-    a.textContent = '';
-    _setAvatarEl(a, dataUrl);
+
+// ── MASTER AVATAR SYNC ───────────────────────────────────────────
+// Single source of truth. Call this whenever avatar state changes.
+// RULE: if userAvatarImage exists → photo only, NEVER show initial.
+function syncAvatarDisplay() {
+  const photo = userAvatarImage;
+  const initial = userName ? userName[0].toLowerCase() : '';
+  const colour = userAvatarColour || '#2DD4BF';
+
+  // All .avatar-lg elements (wardrobe header, etc)
+  document.querySelectorAll('.avatar-lg').forEach(el => {
+    if (photo) {
+      el.textContent = '';
+      el.style.backgroundImage = `url('${photo}')`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.background = '';
+    } else {
+      el.style.backgroundImage = '';
+      el.style.background = colour;
+      el.textContent = initial;
+    }
   });
-  // Settings avatar — clear text initial first, then apply photo
-  const _sa = document.getElementById('settings-avatar');
-  if (_sa) {
-    _sa.textContent = '';
-    _sa.style.backgroundImage = `url('${dataUrl}')`;
-    _sa.style.backgroundSize = 'cover';
-    _sa.style.backgroundPosition = 'center';
+
+  // Settings avatar specifically
+  const sa = document.getElementById('settings-avatar');
+  if (sa) {
+    if (photo) {
+      sa.textContent = '';
+      sa.style.backgroundImage = `url('${photo}')`;
+      sa.style.backgroundSize = 'cover';
+      sa.style.backgroundPosition = 'center';
+    } else {
+      sa.style.backgroundImage = '';
+      sa.style.background = colour;
+      sa.textContent = initial;
+    }
   }
+
+  // Bottom nav avatar img
+  const navAv = document.getElementById('nav-avatar-img');
+  if (navAv) {
+    if (photo) { navAv.src = photo; navAv.style.borderRadius = '50%'; }
+    else navAv.src = '';
+  }
+
   // QR screen avatar
   const qrAv = document.getElementById('qr-avatar');
   if (qrAv) {
-    qrAv.style.backgroundImage = `url('${dataUrl}')`;
-    qrAv.style.backgroundSize = 'cover';
-    qrAv.style.backgroundPosition = 'center';
-    qrAv.textContent = '';
+    if (photo) {
+      qrAv.textContent = '';
+      qrAv.style.backgroundImage = `url('${photo}')`;
+      qrAv.style.backgroundSize = 'cover';
+      qrAv.style.backgroundPosition = 'center';
+    } else {
+      qrAv.style.backgroundImage = '';
+      qrAv.textContent = initial;
+    }
   }
+
+  // Re-apply avatar border if saved
+  const savedBorder = localStorage.getItem('fs_avatar_border');
+  if (savedBorder && isPro) applyAvatarBorder(savedBorder);
+}
+
+function applyAvatarImageEverywhere(dataUrl) {
+  if (!dataUrl) return;
+  userAvatarImage = dataUrl;
+  // Update ownerAvatarUrl on all myItems
+  myItems.forEach(i => { i.ownerAvatarUrl = dataUrl; });
+  syncAvatarDisplay();
 }
 
 async function saveProfile() {
@@ -6746,9 +6789,8 @@ async function saveProfile() {
     userEmoji = selectedEmoji;
     userNameColour = selectedColour;
   }
-  // Update avatar initials everywhere
-  const initial = userName[0]?.toLowerCase() || 'h';
-  document.querySelectorAll('.avatar-lg').forEach(a => { if(a.textContent.length <= 2) a.textContent = initial; });
+  // Sync avatar display (photo takes priority over initial)
+  syncAvatarDisplay();
   const nameWithEmoji = userName + (userEmoji ? ' ' + userEmoji : '');
   const nameEl = document.getElementById('settings-name');
   if (nameEl) { nameEl.textContent = nameWithEmoji; nameEl.style.color = isPro ? userNameColour : ''; }
@@ -6931,13 +6973,10 @@ function applyProfileToUI(profile) {
   userName = name;
   userHandle = handle;
   // Set initial letter only if no photo; if photo, clear text
-  if (userAvatarImage) {
-    document.querySelectorAll('.avatar-lg').forEach(a => { a.textContent = ''; });
-    // Refresh owner avatar on all myItems so item detail shows correct photo
-    myItems.forEach(i => { i.ownerAvatarUrl = userAvatarImage; i.owner = name; });
-  } else {
-    document.querySelectorAll('.avatar-lg').forEach(a => { a.style.backgroundImage = ''; a.textContent = initial; });
-  }
+  // Sync avatar — photo always beats initial
+  syncAvatarDisplay();
+  // Refresh owner fields on myItems
+  if (userAvatarImage) myItems.forEach(i => { i.ownerAvatarUrl = userAvatarImage; i.owner = name; });
   const settingsName = document.getElementById('settings-name');
   if (settingsName) settingsName.textContent = name + (userEmoji ? ' ' + userEmoji : '');
   const settingsEmail = document.querySelector('.settings-user .email');
@@ -6960,29 +6999,21 @@ function applyProfileToUI(profile) {
   userAvatarColour = colour;
   if (profile.avatar_url) {
     userAvatarImage = profile.avatar_url;
-    applyAvatarImageEverywhere(profile.avatar_url);
-    // Clear settings-avatar initial text immediately
-    const _saEl = document.getElementById('settings-avatar');
-    if (_saEl) _saEl.textContent = '';
-    // Also set edit preview
+    // Set edit preview
     const img = document.getElementById('edit-avatar-img');
-    const initial = document.getElementById('edit-avatar-initial');
     if (img) { img.src = profile.avatar_url; img.style.display = 'block'; }
-    if (initial) initial.style.display = 'none';
     const editPrev = document.getElementById('edit-avatar-preview');
     if (editPrev) editPrev.style.background = colour;
   } else {
     userAvatarImage = null;
-    document.querySelectorAll('.avatar-lg').forEach(a => { a.style.background = colour; a.style.backgroundImage = ''; });
+    userAvatarColour = colour;
     const editAvatarPrev = document.getElementById('edit-avatar-preview');
     if (editAvatarPrev) { editAvatarPrev.style.background = colour; editAvatarPrev.style.backgroundImage = ''; }
   }
+  // Always use syncAvatarDisplay — never manually set text here
+  syncAvatarDisplay();
   // Always sync the edit screen preview
   refreshEditAvatarPreview();
-
-  // Restore saved avatar border
-  const savedBorder = localStorage.getItem('fs_avatar_border');
-  if (savedBorder && isPro) setTimeout(() => applyAvatarBorder(savedBorder), 100);
 
   // ── Pro status from DB ──
   if (profile.is_pro || profile.pro_expires_at) {
@@ -6999,6 +7030,8 @@ function applyProfileToUI(profile) {
       if (proBadge) proBadge.style.display = 'flex';
     }
   }
+  // Final sync — always runs last to guarantee photo beats initial
+  syncAvatarDisplay();
 }
 
 // == LOAD USER'S WARDROBE ITEMS ==
@@ -7723,15 +7756,8 @@ function openQRScreen() {
   const qrAv = document.getElementById('qr-avatar');
   if (qrAv) {
     const photo = userAvatarImage || currentProfile?.avatar_url;
-    if (photo) {
-      qrAv.style.backgroundImage = `url('${photo}')`;
-      qrAv.style.backgroundSize = 'cover';
-      qrAv.style.backgroundPosition = 'center';
-      qrAv.textContent = '';
-    } else {
-      qrAv.style.backgroundImage = '';
-      qrAv.textContent = initial;
-    }
+    // syncAvatarDisplay handles QR avatar correctly
+    syncAvatarDisplay();
   }
 
   showScreen('qr');
