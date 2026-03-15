@@ -1291,7 +1291,7 @@
         <div class="name" id="settings-name">harry</div>
         <div class="email"><a href="mailto:info@fitshare.co.uk" style="color:#2DD4BF;">info@fitshare.co.uk</a></div>
       </div>
-      <div id="pro-badge-settings" style="display:none;margin-left:auto;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;">✦ PRO</div>
+      <div id="pro-badge-settings" style="display:none;margin-left:auto;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;">✦ Plus</div>
     </div>
 
     <!-- PRO BANNER (shown when not subscribed) -->
@@ -6235,6 +6235,16 @@ function selectColour(el, colour) {
   previewName();
 }
 
+function applyNameColour(colour) {
+  // Apply the user's name colour everywhere their name appears in the app
+  const els = [
+    document.getElementById('settings-name'),
+    document.querySelector('#screen-wardrobe .profile-info h3'),
+    document.getElementById('qr-name'),
+  ];
+  els.forEach(el => { if (el) el.style.color = colour || ''; });
+}
+
 function previewName() {
   const name = document.getElementById('edit-name')?.value || userName;
   const preview = document.getElementById('name-preview');
@@ -6377,22 +6387,38 @@ function cropZoomChanged() {
 
 function setAvatarBorder(colour, el) {
   if (!requirePro('Avatar border colour')) return;
-  const preview = document.getElementById('edit-avatar-preview');
-  if (preview) {
-    // For gradients we can't use border-color — use outline trick or box-shadow
-    if (colour.startsWith('linear-gradient')) {
-      preview.style.border = 'none';
-      preview.style.padding = '3px';
-      preview.style.background = colour;
-    } else {
-      preview.style.padding = '';
-      preview.style.background = '';
-      preview.style.border = `3px solid ${colour}`;
-    }
-    localStorage.setItem('fs_avatar_border', colour);
-  }
+  localStorage.setItem('fs_avatar_border', colour);
+  applyAvatarBorder(colour);
   document.querySelectorAll('#avatar-border-picker div').forEach(d => d.style.outline = 'none');
   if (el) el.style.outline = '3px solid var(--black)';
+}
+
+function applyAvatarBorder(colour) {
+  if (!colour) return;
+  const targets = [
+    document.getElementById('edit-avatar-preview'),
+    document.getElementById('settings-avatar'),
+    document.getElementById('nav-avatar-img')?.closest('.avatar-lg'),
+  ].filter(Boolean);
+  targets.forEach(el => {
+    if (colour.startsWith('linear-gradient')) {
+      el.style.border = 'none';
+      el.style.padding = '3px';
+      // Only set background for gradient if no photo (otherwise it shows through)
+      if (!userAvatarImage) el.style.background = colour;
+      else {
+        // Apply as box-shadow ring instead so photo still shows
+        el.style.outline = '3px solid transparent';
+        el.style.boxShadow = `0 0 0 3px ${colour.replace('linear-gradient','').replace(/\(.*\)/,'').trim() || '#f59e0b'}`;
+      }
+    } else {
+      el.style.padding = '';
+      el.style.border = `3px solid ${colour}`;
+    }
+  });
+  // Also apply to QR avatar
+  const qrAv = document.getElementById('qr-avatar');
+  if (qrAv) qrAv.style.border = colour.startsWith('linear-gradient') ? 'none' : `3px solid ${colour}`;
 }
 
 function cancelCrop() {
@@ -6517,8 +6543,14 @@ function applyAvatarImageEverywhere(dataUrl) {
     a.textContent = '';
     _setAvatarEl(a, dataUrl);
   });
-  // Settings avatar
-  _setAvatarEl(document.getElementById('settings-avatar'), dataUrl);
+  // Settings avatar — clear text initial first, then apply photo
+  const _sa = document.getElementById('settings-avatar');
+  if (_sa) {
+    _sa.textContent = '';
+    _sa.style.backgroundImage = `url('${dataUrl}')`;
+    _sa.style.backgroundSize = 'cover';
+    _sa.style.backgroundPosition = 'center';
+  }
   // QR screen avatar
   const qrAv = document.getElementById('qr-avatar');
   if (qrAv) {
@@ -6575,12 +6607,16 @@ async function saveProfile() {
   // Update avatar initials everywhere
   const initial = userName[0]?.toLowerCase() || 'h';
   document.querySelectorAll('.avatar-lg').forEach(a => { if(a.textContent.length <= 2) a.textContent = initial; });
-  document.getElementById('settings-name').textContent = userName + (userEmoji ? ' '+userEmoji : '');
+  const nameWithEmoji = userName + (userEmoji ? ' ' + userEmoji : '');
+  const nameEl = document.getElementById('settings-name');
+  if (nameEl) { nameEl.textContent = nameWithEmoji; nameEl.style.color = isPro ? userNameColour : ''; }
   // Update wardrobe profile header
   const wProfileName = document.querySelector('#screen-wardrobe .profile-info h3');
-  if (wProfileName) wProfileName.textContent = userName;
+  if (wProfileName) { wProfileName.textContent = userName; wProfileName.style.color = isPro ? userNameColour : ''; }
   const wHandle = document.querySelector('#screen-wardrobe .handle');
   if (wHandle) wHandle.textContent = userHandle;
+  // Apply name colour globally
+  applyNameColour(isPro ? userNameColour : '#111111');
   // Save to Supabase
   saveProfileToSupabase(userName, userHandle);
   showToast('Profile saved ✓');
@@ -6783,6 +6819,9 @@ function applyProfileToUI(profile) {
   if (profile.avatar_url) {
     userAvatarImage = profile.avatar_url;
     applyAvatarImageEverywhere(profile.avatar_url);
+    // Clear settings-avatar initial text immediately
+    const _saEl = document.getElementById('settings-avatar');
+    if (_saEl) _saEl.textContent = '';
     // Also set edit preview
     const img = document.getElementById('edit-avatar-img');
     const initial = document.getElementById('edit-avatar-initial');
@@ -6798,6 +6837,10 @@ function applyProfileToUI(profile) {
   }
   // Always sync the edit screen preview
   refreshEditAvatarPreview();
+
+  // Restore saved avatar border
+  const savedBorder = localStorage.getItem('fs_avatar_border');
+  if (savedBorder && isPro) setTimeout(() => applyAvatarBorder(savedBorder), 100);
 
   // ── Pro status from DB ──
   if (profile.is_pro || profile.pro_expires_at) {
