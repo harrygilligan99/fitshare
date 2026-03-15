@@ -154,7 +154,7 @@
     cursor:pointer; transition: transform 0.18s, box-shadow 0.18s;
   }
   .feed-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.1); }
-  .feed-card-img { width:100%; aspect-ratio:3/4; object-fit:cover; background: var(--gray-200); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .feed-card-img { width:100%; aspect-ratio:3/4; object-fit:cover; background: var(--gray-200); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
   .feed-card-img img { width:100%; height:100%; object-fit:cover; }
   .feed-card-img .placeholder-icon { font-size:40px; }
   .feed-card-body { padding:10px 10px 8px; }
@@ -2620,7 +2620,9 @@ function setSizeFilter(size, el) {
 // ITEM DETAIL
 // ==========================================
 function getItemById(id) {
-  return sampleItems.find(i => i.id === id) || myItems.find(i => i.localId === id) || otherItems.find(i => i.id === id);
+  return myItems.find(i => i.id === id || i.localId === id)
+      || otherItems.find(i => i.id === id || i.localId === id)
+      || sampleItems.find(i => i.id === id);
 }
 
 function openItemDetail(id) {
@@ -3064,6 +3066,11 @@ async function addItem() {
     visibility,
     group_id,
     collectionId: _selectedItemCollectionId || null,
+    owner: userName || '',
+    ownerAvatar: (userName||'?')[0]?.toLowerCase() || '?',
+    ownerColor: userAvatarColour || '#2DD4BF',
+    ownerAvatarUrl: userAvatarImage || null,
+    user_id: currentSupaUser?.id,
     likes: 0, liked: false, requested: false,
     affiliate: window._pendingAffiliate || null,
   };
@@ -6178,6 +6185,8 @@ function _setAvatarEl(el, dataUrl) {
 
 function applyAvatarImageEverywhere(dataUrl) {
   if (!dataUrl) return;
+  // Update ownerAvatarUrl on all myItems so item detail reflects latest avatar
+  myItems.forEach(i => { i.ownerAvatarUrl = dataUrl; });
   // Update bottom nav profile icon to user's own photo
   const _navAv = document.getElementById('nav-avatar-img');
   if (_navAv) { _navAv.src = dataUrl; _navAv.style.borderRadius = '50%'; _navAv.style.outline = 'none'; }
@@ -6424,6 +6433,8 @@ function applyProfileToUI(profile) {
   // Set initial letter only if no photo; if photo, clear text
   if (userAvatarImage) {
     document.querySelectorAll('.avatar-lg').forEach(a => { a.textContent = ''; });
+    // Refresh owner avatar on all myItems so item detail shows correct photo
+    myItems.forEach(i => { i.ownerAvatarUrl = userAvatarImage; i.owner = name; });
   } else {
     document.querySelectorAll('.avatar-lg').forEach(a => { a.style.backgroundImage = ''; a.textContent = initial; });
   }
@@ -6487,7 +6498,13 @@ async function loadMyItems() {
       desc: row.description || '',
       imageData: row.image_url || null,
       emoji: row.emoji || '\uD83D\uDC55',
-      likes: 0, liked: false, requested: false,
+      boards: row.boards || [],
+      // Owner fields — populated from current user profile
+      owner: userName || '',
+      ownerAvatar: (userName||'?')[0]?.toLowerCase() || '?',
+      ownerColor: userAvatarColour || '#2DD4BF',
+      ownerAvatarUrl: userAvatarImage || null,
+      likes: row.likes || 0, liked: false, requested: false,
       affiliate: null
     }));
     renderWardrobe();
