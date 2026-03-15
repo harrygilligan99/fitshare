@@ -896,49 +896,79 @@
     <div id="active-filters-bar" style="display:none;padding:8px 16px 0;display:none;flex-wrap:wrap;gap:6px;"></div>
 
     <!-- Category chips -->
-    <div class="filter-row" id="cat-filters" style="padding-top:10px;">
-      <div class="filter-chip active" onclick="setCatFilter(&#39;All&#39;,this)">All</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Top&#39;,this)">👕 Tops</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;T-Shirt&#39;,this)">👕 T-Shirts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Shirt&#39;,this)">👔 Shirts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Blouse&#39;,this)">👚 Blouses</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Hoodie&#39;,this)">🧥 Hoodies</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Sweatshirt&#39;,this)">👕 Sweatshirts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Knitwear&#39;,this)">🧶 Knitwear</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Bottom&#39;,this)">👖 Bottoms</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Jeans&#39;,this)">👖 Jeans</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Trousers&#39;,this)">👔 Trousers</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Leggings&#39;,this)">🩱 Leggings</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Shorts&#39;,this)">🩲 Shorts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Skirt&#39;,this)">👗 Skirts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Dress&#39;,this)">👗 Dresses</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Jumpsuit&#39;,this)">🩱 Jumpsuits</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Co-ord&#39;,this)">👗 Co-ords</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Outerwear&#39;,this)">🧥 Coats & Jackets</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Blazer&#39;,this)">🧥 Blazers</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Suit&#39;,this)">👔 Suits</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Activewear&#39;,this)">🏃 Activewear</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Swimwear&#39;,this)">👙 Swimwear</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Lingerie&#39;,this)">🩱 Lingerie</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Shoes&#39;,this)">👟 Shoes</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Trainers&#39;,this)">👟 Trainers</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Boots&#39;,this)">👢 Boots</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Heels&#39;,this)">👠 Heels</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Sandals&#39;,this)">🩴 Sandals</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Bag&#39;,this)">👜 Bags</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Handbag&#39;,this)">👛 Handbags</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Backpack&#39;,this)">🎒 Backpacks</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Hat&#39;,this)">🧢 Hats & Caps</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Scarf&#39;,this)">🧣 Scarves</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Belt&#39;,this)">👔 Belts</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Jewellery&#39;,this)">💍 Jewellery</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Sunglasses&#39;,this)">🕶️ Sunglasses</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Accessory&#39;,this)">✨ Accessories</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Prom&#39;,this)">👑 Prom</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Bridesmaid&#39;,this)">💐 Bridesmaid</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Occasion&#39;,this)">🎉 Occasion</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Costume&#39;,this)">🎭 Costume</div>
-      <div class="filter-chip" onclick="setCatFilter(&#39;Vintage&#39;,this)">🕰️ Vintage</div>
+    <div class="filter-row" id="cat-filters" style="padding:10px 16px 0;">
+      <!-- Category dropdown replaces horizontal chips -->
+      <div style="position:relative;">
+        <select id="cat-filter-select" onchange="setCatFilterFromSelect(this.value)"
+          style="width:100%;padding:11px 36px 11px 14px;border-radius:12px;border:1.5px solid var(--gray-200);background:var(--gray-50);color:var(--black);font-size:14px;font-weight:600;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
+          <option value="All">All categories</option>
+          <optgroup label="── Tops">
+            <option value="Top">Tops</option>
+            <option value="T-Shirt">T-Shirts</option>
+            <option value="Shirt">Shirts</option>
+            <option value="Blouse">Blouses</option>
+            <option value="Hoodie">Hoodies</option>
+            <option value="Sweatshirt">Sweatshirts</option>
+            <option value="Knitwear">Knitwear</option>
+          </optgroup>
+          <optgroup label="── Bottoms">
+            <option value="Bottom">Bottoms</option>
+            <option value="Jeans">Jeans</option>
+            <option value="Trousers">Trousers</option>
+            <option value="Leggings">Leggings</option>
+            <option value="Shorts">Shorts</option>
+            <option value="Skirt">Skirts</option>
+          </optgroup>
+          <optgroup label="── Dresses & Suits">
+            <option value="Dress">Dresses</option>
+            <option value="Jumpsuit">Jumpsuits</option>
+            <option value="Co-ord">Co-ords</option>
+            <option value="Blazer">Blazers</option>
+            <option value="Suit">Suits</option>
+          </optgroup>
+          <optgroup label="── Outerwear">
+            <option value="Outerwear">Coats & Jackets</option>
+          </optgroup>
+          <optgroup label="── Activewear & Swim">
+            <option value="Activewear">Activewear</option>
+            <option value="Swimwear">Swimwear</option>
+            <option value="Lingerie">Lingerie</option>
+          </optgroup>
+          <optgroup label="── Shoes">
+            <option value="Shoes">Shoes (all)</option>
+            <option value="Trainers">Trainers</option>
+            <option value="Boots">Boots</option>
+            <option value="Heels">Heels</option>
+            <option value="Sandals">Sandals</option>
+          </optgroup>
+          <optgroup label="── Bags">
+            <option value="Bag">Bags (all)</option>
+            <option value="Handbag">Handbags</option>
+            <option value="Backpack">Backpacks</option>
+          </optgroup>
+          <optgroup label="── Accessories">
+            <option value="Hat">Hats & Caps</option>
+            <option value="Scarf">Scarves</option>
+            <option value="Belt">Belts</option>
+            <option value="Jewellery">Jewellery</option>
+            <option value="Sunglasses">Sunglasses</option>
+            <option value="Accessory">Accessories (other)</option>
+          </optgroup>
+          <optgroup label="── Occasions">
+            <option value="Prom">Prom</option>
+            <option value="Bridesmaid">Bridesmaid</option>
+            <option value="Occasion">Occasion wear</option>
+            <option value="Costume">Costume</option>
+          </optgroup>
+          <optgroup label="── Other">
+            <option value="Vintage">Vintage</option>
+          </optgroup>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--gray-500);pointer-events:none;">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
     </div>
 
     <!-- Sort + result count row -->
@@ -974,46 +1004,38 @@
 <!-- ========== EXPLORE FILTER SHEET ========== -->
 <div class="modal-overlay" id="explore-filter-modal">
   <div class="modal" style="padding:20px 20px 32px;max-height:85vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <h3 style="font-size:18px;font-weight:700;">Filters</h3>
       <button onclick="document.getElementById('explore-filter-modal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--gray-400);">✕</button>
     </div>
-    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Size</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="filter-sizes">
-      <div class="size-chip active" onclick="setSizeFilter('All',this)">All</div>
-      <div class="size-chip" onclick="setSizeFilter('XS',this)">XS</div>
-      <div class="size-chip" onclick="setSizeFilter('S',this)">S</div>
-      <div class="size-chip" onclick="setSizeFilter('M',this)">M</div>
-      <div class="size-chip" onclick="setSizeFilter('L',this)">L</div>
-      <div class="size-chip" onclick="setSizeFilter('XL',this)">XL</div>
-      <div class="size-chip" onclick="setSizeFilter('6',this)">6</div>
-      <div class="size-chip" onclick="setSizeFilter('8',this)">8</div>
-      <div class="size-chip" onclick="setSizeFilter('10',this)">10</div>
-      <div class="size-chip" onclick="setSizeFilter('12',this)">12</div>
+
+    <!-- Size — dynamic based on category -->
+    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">
+      Size
+      <span id="size-filter-hint" style="font-size:11px;font-weight:400;color:var(--gray-400);margin-left:6px;">Select a category first for specific sizes</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;" id="filter-sizes">
+      <div class="size-chip active" onclick="setSizeFilter('All',this)">Any size</div>
     </div>
 
-    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Friends only</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-100);">
-      <span style="font-size:13px;color:var(--gray-700);">Only show items from friends</span>
-      <div class="toggle" id="friends-only-toggle" onclick="this.classList.toggle('on');renderExplore()"></div>
+    <!-- Occasion -->
+    <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Occasion</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;" id="occasion-filter-chips">
+      <div class="size-chip active" onclick="setOccFilter('All',this)">Any</div>
+      <div class="size-chip" onclick="setOccFilter('Casual',this)">Casual</div>
+      <div class="size-chip" onclick="setOccFilter('Going out',this)">Going out</div>
+      <div class="size-chip" onclick="setOccFilter('Formal',this)">Formal</div>
+      <div class="size-chip" onclick="setOccFilter('Prom',this)">👑 Prom</div>
+      <div class="size-chip" onclick="setOccFilter('Bridesmaid',this)">💐 Bridesmaid</div>
+      <div class="size-chip" onclick="setOccFilter('Festival',this)">Festival</div>
+      <div class="size-chip" onclick="setOccFilter('Holiday',this)">Holiday</div>
+      <div class="size-chip" onclick="setOccFilter('Work',this)">Work</div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:20px;">
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;margin-top:4px;">
       <button onclick="resetFilters()" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid var(--gray-200);background:white;font-size:14px;font-weight:600;cursor:pointer;">Reset</button>
       <button onclick="applyFilters()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--black);color:white;font-size:14px;font-weight:600;cursor:pointer;">Apply</button>
-    </div>
-    <div style="margin-top:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:8px;">Occasion</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="occasion-filter-chips">
-        <div class="size-chip active" onclick="setOccFilter('All',this)">All</div>
-        <div class="size-chip" onclick="setOccFilter('Casual',this)">Casual</div>
-        <div class="size-chip" onclick="setOccFilter('Going out',this)">Going out</div>
-        <div class="size-chip" onclick="setOccFilter('Formal',this)">Formal</div>
-        <div class="size-chip" onclick="setOccFilter('Prom',this)">👑 Prom</div>
-        <div class="size-chip" onclick="setOccFilter('Bridesmaid',this)">💐 Bridesmaid</div>
-        <div class="size-chip" onclick="setOccFilter('Festival',this)">Festival</div>
-        <div class="size-chip" onclick="setOccFilter('Holiday',this)">Holiday</div>
-        <div class="size-chip" onclick="setOccFilter('Work',this)">Work</div>
-      </div>
     </div>
   </div>
 </div>
@@ -1060,18 +1082,24 @@
       </button>
     </div>
 
-    <!-- Collections tab row -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;">
-      <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid var(--gray-200);">
-        <button id="wtab-collections" onclick="setWardrobeTab('collections')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--black);color:white;">Collections</button>
-        <button id="wtab-all" onclick="setWardrobeTab('all')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);">All</button>
-        <button id="wtab-liked" onclick="setWardrobeTab('liked')" style="padding:7px 14px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:white;color:var(--gray-500);display:flex;align-items:center;gap:4px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          Liked
-        </button>
-      </div>
-      <button onclick="openCreateCollection()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray-700);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <!-- Collections tab row — underline style matching user profile -->
+    <div style="display:flex;border-bottom:1.5px solid var(--gray-200);padding:0 16px;margin-top:12px;align-items:center;">
+      <button id="wtab-all" onclick="setWardrobeTab('all')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid transparent;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all 0.15s;margin-bottom:-1.5px;">
+        All items
+      </button>
+      <button id="wtab-collections" onclick="setWardrobeTab('collections')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid var(--black);background:none;font-size:13px;font-weight:700;color:var(--black);cursor:pointer;transition:all 0.15s;margin-bottom:-1.5px;">
+        Collections
+      </button>
+      <button id="wtab-liked" onclick="setWardrobeTab('liked')"
+        style="padding:10px 16px;border:none;border-bottom:2.5px solid transparent;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all 0.15s;margin-bottom:-1.5px;display:flex;align-items:center;gap:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Liked
+      </button>
+      <div style="flex:1;"></div>
+      <button onclick="openCreateCollection()" style="display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:white;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray-700);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         New
       </button>
     </div>
@@ -2529,7 +2557,6 @@ function cardHTML(item, isOwn) {
 // EXPLORE SEARCH — rich Vinted-style
 // ==========================================
 let recentSearches = JSON.parse(localStorage.getItem('fs_recent_searches') || '[]');
-let currentCondFilter = 'All';
 let exploreSearchQuery = '';
 
 function setExploreTab(tab) {
@@ -2621,6 +2648,11 @@ async function toggleFollowFromSearch(userId, btn) {
 }
 
 function openExploreFilters() {
+  // Sync dropdown to current cat filter
+  const sel = document.getElementById('cat-filter-select');
+  if (sel) sel.value = currentCatFilter || 'All';
+  // Update size chips for current category
+  updateFilterSizes(currentCatFilter || 'All');
   document.getElementById('explore-filter-modal').classList.add('open');
 }
 function applyFilters() {
@@ -2630,17 +2662,18 @@ function applyFilters() {
 }
 function resetFilters() {
   currentSizeFilter = 'All';
-  currentCondFilter = 'All';
-  document.getElementById('friends-only-toggle').classList.remove('on');
-  document.querySelectorAll('#filter-sizes .size-chip').forEach((c,i) => c.classList.toggle('active', i===0));
-
+  currentCatFilter = 'All';
+  currentOccFilter = 'All';
+  const sel = document.getElementById('cat-filter-select');
+  if (sel) sel.value = 'All';
+  updateFilterSizes('All');
+  document.querySelectorAll('#occasion-filter-chips .size-chip').forEach((chip,i) => chip.classList.toggle('active', i===0));
   renderExplore();
   updateFilterBtn();
 }
 
 function updateFilterBtn() {
-  const active = currentSizeFilter !== 'All' || currentOccFilter !== 'All' ||
-    document.getElementById('friends-only-toggle')?.classList.contains('on');
+  const active = currentSizeFilter !== 'All' || currentOccFilter !== 'All' || currentCatFilter !== 'All';
   const btn = document.getElementById('filter-btn');
   if (btn) {
     btn.style.background = active ? 'var(--black)' : 'white';
@@ -2714,7 +2747,7 @@ function scoreItem(item, words) {
 function renderExplore() {
   const q = exploreSearchQuery.toLowerCase().trim();
   const words = q ? q.split(/\s+/).filter(Boolean) : [];
-  const friendsOnly = document.getElementById('friends-only-toggle')?.classList.contains('on');
+
   const sort = document.getElementById('explore-sort')?.value || 'newest';
   const friendIds = new Set(friends.map(f => f.id));
 
@@ -2737,8 +2770,7 @@ function renderExplore() {
     const catOk = currentCatFilter === 'All' || item.category === currentCatFilter;
     const sizeOk = currentSizeFilter === 'All' || item.size === currentSizeFilter;
     const occOk = currentOccFilter === 'All' || (item.occasion || item.category || '') === currentOccFilter;
-    const friendsOk = !friendsOnly || friendIds.has(item.user_id) || item.user_id === currentSupaUser?.id;
-    if (!catOk || !sizeOk || !occOk || !friendsOk) return false;
+    if (!catOk || !sizeOk || !occOk) return false;
     if (!words.length) return true;
     // All words must appear somewhere across all fields
     const haystack = [item.title, item.category, item.size, item.desc||'', item.owner||'', item.handle||''].join(' ').toLowerCase();
@@ -2776,6 +2808,37 @@ function setOccFilter(occ, btn) {
   currentOccFilter = occ;
   document.querySelectorAll('#occasion-filter-chips .size-chip').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+}
+
+
+function setCatFilterFromSelect(cat) {
+  currentCatFilter = cat;
+  // Update the dropdown visual
+  const sel = document.getElementById('cat-filter-select');
+  if (sel) sel.value = cat;
+  // Update size chips to match the selected category
+  updateFilterSizes(cat);
+  renderExplore();
+}
+
+function updateFilterSizes(cat) {
+  const el = document.getElementById('filter-sizes');
+  const hint = document.getElementById('size-filter-hint');
+  if (!el) return;
+  // Get sizes for this category
+  const sizes = CATEGORY_SIZES[cat] || null;
+  if (!sizes || cat === 'All') {
+    el.innerHTML = '<div class="size-chip active" onclick="setSizeFilter(\'All\',this)">Any size</div>';
+    currentSizeFilter = 'All';
+    if (hint) hint.style.display = 'inline';
+    return;
+  }
+  if (hint) hint.style.display = 'none';
+  const allChips = ['<div class="size-chip active" onclick="setSizeFilter(\'All\',this)">Any</div>',
+    ...sizes.map(s => `<div class="size-chip" onclick="setSizeFilter('${s}',this)">${s}</div>`)
+  ];
+  el.innerHTML = allChips.join('');
+  currentSizeFilter = 'All';
 }
 
 function setCatFilter(cat, el) {
@@ -3527,12 +3590,18 @@ let selectedCollectionCover = null;
 let editingCollectionId = null;
 
 function setWardrobeTab(tab) {
-  document.getElementById('wtab-all').style.background = tab==='all' ? 'var(--black)' : 'white';
-  document.getElementById('wtab-all').style.color = tab==='all' ? 'white' : 'var(--gray-500)';
-  document.getElementById('wtab-collections').style.background = tab==='collections' ? 'var(--black)' : 'white';
-  document.getElementById('wtab-collections').style.color = tab==='collections' ? 'white' : 'var(--gray-500)';
-  const likedBtn = document.getElementById('wtab-liked');
-  if (likedBtn) { likedBtn.style.background = tab==='liked' ? 'var(--black)' : 'white'; likedBtn.style.color = tab==='liked' ? 'white' : 'var(--gray-500)'; }
+  ['all','collections','liked'].forEach(t => {
+    const btn = document.getElementById('wtab-' + t);
+    if (!btn) return;
+    const active = t === tab;
+    btn.style.fontWeight = active ? '700' : '500';
+    btn.style.color = active ? 'var(--black)' : 'var(--gray-500)';
+    btn.style.borderBottom = active ? '2.5px solid var(--black)' : '2.5px solid transparent';
+    if (t === 'liked') {
+      const svg = btn.querySelector('svg');
+      if (svg) { svg.setAttribute('fill', active ? 'var(--red,#ef4444)' : 'none'); svg.setAttribute('stroke', active ? 'var(--red,#ef4444)' : 'var(--gray-500)'); }
+    }
+  });
   document.getElementById('wardrobe-all-view').style.display = tab==='all' ? '' : 'none';
   document.getElementById('wardrobe-collections-view').style.display = tab==='collections' ? '' : 'none';
   const likedView = document.getElementById('wardrobe-liked-view');
@@ -3794,7 +3863,7 @@ async function toggleLike(id) {
   renderFeed(); renderExplore();
   if (currentScreen === 'item-detail') openItemDetail(id);
   renderWardrobeLikedTab();
-  if (currentScreen === 'user-profile' && _viewingUserId) _renderUserProfileTab(document.querySelector('#uptab-liked.active') ? 'liked' : 'all', _viewingUserId);
+  if (currentScreen === 'user-profile' && _viewingUserId) _renderUserProfileTab('all', _viewingUserId);
   try {
     if (wasLiked) {
       await _supaClient.from('item_likes').delete()
@@ -4609,11 +4678,7 @@ function _buildUserProfileHTML(userId, name, handle, color, avatarUrl, isFollowi
         style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='collections'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='collections'?700:500};color:${activeTab==='collections'?'var(--black)':'var(--gray-500)'};cursor:pointer;transition:all 0.15s;">
         Collections
       </button>
-      <button id="uptab-liked" onclick="_renderUserProfileTab('liked','${userId}')"
-        style="padding:10px 16px;border:none;border-bottom:2.5px solid ${activeTab==='liked'?'var(--black)':'transparent'};background:none;font-size:13px;font-weight:${activeTab==='liked'?700:500};color:${activeTab==='liked'?'var(--black)':'var(--gray-500)'};cursor:pointer;display:flex;align-items:center;gap:4px;">
-        <svg viewBox="0 0 24 24" fill="${activeTab==='liked'?'var(--red)':'none'}" stroke="${activeTab==='liked'?'var(--red)':'var(--gray-500)'}" stroke-width="2" style="width:13px;height:13px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-        Liked
-      </button>
+
     </div>
     ${isFriend ? `<div id="user-profile-tab-content" style="padding-bottom:24px;"></div>` : ""}
   `;
@@ -4625,7 +4690,7 @@ function _renderUserProfileTab(tab, userId) {
   if (!content) return;
 
   // Update tab styles
-  ['all','collections','liked'].forEach(t => {
+  ['all','collections'].forEach(t => {
     const btn = document.getElementById('uptab-' + t);
     if (!btn) return;
     const active = t === tab;
@@ -4702,19 +4767,7 @@ function _renderUserProfileTab(tab, userId) {
     return;
   }
 
-  if (tab === 'liked') {
-    // Show items this person has liked (items in likedItemIds that belong to userId)
-    // We can't know who liked what without a DB call, so show items the viewer has liked FROM this person
-    const likedFromThem = theirItems.filter(i => likedItemIds.has(i.id || i.localId));
-    if (likedFromThem.length === 0) {
-      content.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gray-400);"><div style="font-size:40px;margin-bottom:10px;">❤️</div><div style="font-size:13px;">You haven't liked any of their items yet</div></div>`;
-      return;
-    }
-    content.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 0;">
-      ${likedFromThem.map(item => _userProfileItemCard(item)).join('')}
-    </div>`;
-    return;
-  }
+
 }
 
 async function _loadUserFriendsCount(userId) {
